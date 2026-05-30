@@ -1,9 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { App, Editor, Notice, TFile, TFolder, htmlToMarkdown, normalizePath } from 'obsidian';
+import { App, Editor, Notice, TFile, TFolder, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 import path from 'path';
 import { CiteKey, DatabaseWithPort } from '../types';
 import { getVaultRoot } from '../helpers';
-import { getLocalURI } from '../zotero/annotations';
+import { convertNativeAnnotation, getColorCategory, getLocalURI } from '../zotero/annotations';
 import { getCiteKeys } from '../zotero/cayw';
 import { getAttachmentsFromCiteKey, getNotesFromCiteKeys } from '../zotero/jsonRPC';
 import { mkMDDir, removeStartingSlash, sanitizeFilePath } from './template.helpers';
@@ -121,6 +121,35 @@ async function getAvailablePathForAttachments(
 	return `${(folder as any).getParentPrefix?.() ?? ''}${base}.${extension}`;
 }
 
+// ── Native annotation formatter ───────────────────────────────────────────────
+
+function formatNativeAnnotation(annot: any, attachment: any): string {
+	const color = getColorCategory(annot.annotationColor ?? '#ffff00');
+	const page = annot.annotationPageLabel ?? '';
+	const uri = attachment.uri
+		? getLocalURI('open-pdf', attachment.uri, { page, annotation: annot.key })
+		: '';
+	const link = uri ? ` [Go to annotation](${uri})` : '';
+	const pageRef = page ? ` (p. ${page})` : '';
+
+	switch (annot.annotationType) {
+		case 'highlight':
+		case 'underline': {
+			const text = annot.annotationText ? `> "${annot.annotationText}"${pageRef}` : '';
+			const comment = annot.annotationComment ? `\n> \n> 💬 ${annot.annotationComment}` : '';
+			return `> [!${color.toLowerCase()}]+ ${color}${link}\n${text}${comment}`.trim();
+		}
+		case 'note': {
+			return `> [!note]+ Note${pageRef}${link}\n> ${annot.annotationComment ?? ''}`.trim();
+		}
+		case 'image': {
+			return `> [!image]+ Image${pageRef}${link}`.trim();
+		}
+		default:
+			return annot.annotationComment ?? '';
+	}
+}
+
 // ── Note export prompt ────────────────────────────────────────────────────────
 
 export async function noteExportPrompt(
@@ -130,48 +159,65 @@ export async function noteExportPrompt(
 	const citeKeys = await getCiteKeys(db);
 	if (!citeKeys.length) return;
 
-	const notes = await getNotesFromCiteKeys(citeKeys, db);
-	if (!notes) {
-		new Notice('No notes found for selected items', 7000);
-		return;
-	}
-
+	const notes = await getNotesFromCiteKeys(citeKeys, db) ?? {};
 	const keys = Object.keys(notes);
-	if (!keys.length) {
-		new Notice('No notes found for selected items', 7000);
-		return;
-	}
 
-	// Collect image attachment paths for each cite key
-	const attachments: Record<string, Record<string, string>> = {};
+	// Collect attachments for each cite key (images for note processing + native annotations)
+	const imageMap: Record<string, Record<string, string>> = {};
+	const nativeAnnotsMap: Record<string, string> = {};
+
 	for (const ck of citeKeys) {
 		const atts = await getAttachmentsFromCiteKey(ck, db);
-		if (atts) {
-			const images: Record<string, string> = {};
-			for (const a of atts) {
-				if (a.annotations) {
-					for (const annot of a.annotations) {
-						if (annot.annotationType === 'image') {
-							images[annot.key] = annot.annotationImagePath;
-						}
-					}
+		if (!atts) continue;
+
+		const images: Record<string, string> = {};
+		const annotLines: string[] = [];
+
+		for (const a of atts) {
+			if (!a.annotations?.length) continue;
+			for (const annot of a.annotations) {
+				if (annot.annotationType === 'image') {
+					images[annot.key] = annot.annotationImagePath;
 				}
+				annotLines.push(formatNativeAnnotation(annot, a));
 			}
-			attachments[ck.key] = images;
 		}
+
+		imageMap[ck.key] = images;
+		if (annotLines.length) nativeAnnotsMap[ck.key] = annotLines.join('\n\n');
 	}
 
 	const notesMarkdown: Record<string, string> = {};
 	for (const key of keys) {
-		const processed: string[] = [];
+		const parts: string[] = [];
+
+		// Text notes (from Zotero note editor)
 		for (const note of notes[key]) {
-			processed.push(
+			parts.push(
 				htmlToMarkdown(
-					await processZoteroAnnotationNotes(key, note, attachments[key] ?? {}, destination)
+					await processZoteroAnnotationNotes(key, note, imageMap[key] ?? {}, destination)
 				)
 			);
 		}
-		notesMarkdown[key] = processed.join('\n\n');
+
+		// Native PDF annotations (highlights, underlines, comments)
+		if (nativeAnnotsMap[key]) {
+			parts.push('## Annotations\n\n' + nativeAnnotsMap[key]);
+		}
+
+		notesMarkdown[key] = parts.filter(Boolean).join('\n\n');
+	}
+
+	// If there were no text notes but there ARE native annotations, still return them
+	for (const ck of citeKeys) {
+		if (!notesMarkdown[ck.key] && nativeAnnotsMap[ck.key]) {
+			notesMarkdown[ck.key] = '## Annotations\n\n' + nativeAnnotsMap[ck.key];
+		}
+	}
+
+	if (!Object.keys(notesMarkdown).length) {
+		new Notice('No notes or annotations found for selected items', 7000);
+		return;
 	}
 
 	return notesMarkdown;

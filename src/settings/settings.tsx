@@ -1,6 +1,8 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type ZoteroManager from '../main';
 import { CitationFormat, ExportFormat } from '../types';
+import { isBBTRunning } from '../zotero/connection';
+import { FolderSuggest } from '../ui/FolderSuggest';
 
 export class ZoteroManagerSettingsTab extends PluginSettingTab {
 	plugin: ZoteroManager;
@@ -17,7 +19,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		// ── Connection ──────────────────────────────────────────────────────────
 		containerEl.createEl('h2', { text: 'Connection' });
 
-		new Setting(containerEl)
+		const dbSetting = new Setting(containerEl)
 			.setName('Database')
 			.setDesc('Which Zotero-compatible application to connect to.')
 			.addDropdown((dd) =>
@@ -32,6 +34,17 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 						this.display();
 					})
 			);
+
+		// Connection status badge
+		const badge = dbSetting.controlEl.createEl('span', {
+			text: 'Checking…',
+			cls: 'zm-connection-badge zm-connection-checking',
+		});
+		const db = { database: this.plugin.settings.database, port: this.plugin.settings.port };
+		isBBTRunning(db, true).then((running) => {
+			badge.setText(running ? 'Linked' : 'Not Linked');
+			badge.className = `zm-connection-badge ${running ? 'zm-connection-linked' : 'zm-connection-unlinked'}`;
+		});
 
 		if (this.plugin.settings.database === 'Custom') {
 			new Setting(containerEl)
@@ -98,7 +111,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 				.setCta()
 				.onClick(async () => {
 					this.plugin.settings.citeFormats.push({
-						name: 'New format',
+						name: `Format ${this.plugin.settings.citeFormats.length + 1}`,
 						format: 'pandoc',
 					});
 					await this.plugin.saveSettings();
@@ -123,7 +136,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 				.setCta()
 				.onClick(async () => {
 					this.plugin.settings.exportFormats.push({
-						name: 'New export',
+						name: `Export ${this.plugin.settings.exportFormats.length + 1}`,
 						outputPathTemplate: '{{citekey}}.md',
 						imageOutputPathTemplate: 'images/{{citekey}}',
 						imageBaseNameTemplate: '{{citekey}}-{{page}}',
@@ -139,15 +152,15 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Note import folder')
 			.setDesc('Vault path where imported Zotero notes are saved.')
-			.addText((t) =>
-				t
-					.setPlaceholder('e.g. Zotero/Notes')
-					.setValue(this.plugin.settings.noteImportFolder)
-					.onChange(async (v) => {
-						this.plugin.settings.noteImportFolder = v;
-						await this.plugin.saveSettings();
-					})
-			);
+			.addText((t) => {
+				t.setPlaceholder('e.g. Zotero/Notes').setValue(this.plugin.settings.noteImportFolder);
+				new FolderSuggest(this.app, t.inputEl);
+				t.onChange(async (v) => {
+					this.plugin.settings.noteImportFolder = v;
+					await this.plugin.saveSettings();
+				});
+				return t;
+			});
 
 		new Setting(containerEl)
 			.setName('Open note after import')
@@ -210,8 +223,10 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 	}
 
 	private renderCiteFormat(el: HTMLElement, fmt: CitationFormat, index: number) {
-		const s = new Setting(el)
-			.setName(`Format: ${fmt.name}`)
+		const originalName = fmt.name;
+
+		new Setting(el)
+			.setName(`Citation format: ${fmt.name}`)
 			.addText((t) =>
 				t
 					.setPlaceholder('Name')
@@ -250,7 +265,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		if (fmt.format === 'template') {
 			new Setting(el)
 				.setName('Template')
-				.setDesc('Nunjucks template. Available variables: citekey, title, authors, etc.')
+				.setDesc('Nunjucks template. Available: citekey, title, authors, year, etc.')
 				.addTextArea((ta) =>
 					ta
 						.setValue(fmt.template ?? '')
@@ -275,11 +290,40 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 						})
 				);
 		}
+
+		if (fmt.format === 'latex' || fmt.format === 'biblatex') {
+			new Setting(el)
+				.setName('Command')
+				.setDesc('LaTeX/BibLaTeX cite command (e.g. cite, autocite, parencite).')
+				.addText((t) =>
+					t
+						.setPlaceholder(fmt.format === 'latex' ? 'cite' : 'autocite')
+						.setValue(fmt.command ?? '')
+						.onChange(async (v) => {
+							this.plugin.settings.citeFormats[index].command = v;
+							await this.plugin.saveSettings();
+						})
+				);
+		}
+
+		if (fmt.format === 'pandoc') {
+			new Setting(el)
+				.setName('Brackets')
+				.setDesc('Wrap citation in square brackets.')
+				.addToggle((tg) =>
+					tg
+						.setValue(fmt.brackets ?? false)
+						.onChange(async (v) => {
+							this.plugin.settings.citeFormats[index].brackets = v;
+							await this.plugin.saveSettings();
+						})
+				);
+		}
 	}
 
 	private renderExportFormat(el: HTMLElement, fmt: ExportFormat, index: number) {
 		new Setting(el)
-			.setName(`Export: ${fmt.name}`)
+			.setName(`Export format: ${fmt.name}`)
 			.addText((t) =>
 				t
 					.setPlaceholder('Name')
@@ -328,7 +372,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 
 		new Setting(el)
 			.setName('Image output path template')
-			.setDesc('Nunjucks template for where to store exported annotation images.')
+			.setDesc('Where to store exported annotation images.')
 			.addText((t) =>
 				t
 					.setPlaceholder('images/{{citekey}}')
@@ -341,7 +385,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 
 		new Setting(el)
 			.setName('Image base name template')
-			.setDesc('Nunjucks template for image file names.')
+			.setDesc('Template for image file names.')
 			.addText((t) =>
 				t
 					.setPlaceholder('{{citekey}}-{{page}}')
@@ -354,7 +398,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 
 		new Setting(el)
 			.setName('CSL style')
-			.setDesc('Citation style for bibliography field in template data (optional).')
+			.setDesc('Citation style for the bibliography field in template data (optional).')
 			.addText((t) =>
 				t
 					.setPlaceholder('e.g. apa')

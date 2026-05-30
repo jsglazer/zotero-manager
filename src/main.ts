@@ -1,6 +1,6 @@
 import { EditableFileView, Notice, Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, ZoteroManagerSettings } from './types';
-import { isBBTRunning, detectMode, warnNoConnection } from './zotero/connection';
+import { detectMode, warnNoConnection } from './zotero/connection';
 import { getCAYW, getCiteKeys } from './zotero/cayw';
 import { renderCiteTemplate, exportToMarkdown } from './export/export';
 import { noteExportPrompt, insertNotesIntoCurrentDoc, filesFromNotes } from './export/exportNotes';
@@ -15,6 +15,8 @@ const EXPORT_CMD_PREFIX = 'zm-export-';
 export default class ZoteroManager extends Plugin {
 	settings!: ZoteroManagerSettings;
 	private citeSuggest!: CiteSuggest;
+	private registeredCiteCommandIds = new Set<string>();
+	private registeredExportCommandIds = new Set<string>();
 
 	async onload() {
 		await this.loadSettings();
@@ -28,12 +30,12 @@ export default class ZoteroManager extends Plugin {
 
 		// Register configured citation commands
 		for (const fmt of this.settings.citeFormats) {
-			this.addCiteCommand(fmt);
+			this._registerCiteCommand(fmt);
 		}
 
 		// Register configured export commands
 		for (const fmt of this.settings.exportFormats) {
-			this.addExportCommand(fmt);
+			this._registerExportCommand(fmt);
 		}
 
 		// Built-in commands
@@ -81,53 +83,83 @@ export default class ZoteroManager extends Plugin {
 		this.app.workspace.detachLeavesOfType(DATA_EXPLORER_VIEW);
 	}
 
-	// ── Dynamic commands ──────────────────────────────────────────────────────
+	// ── Dynamic command registration ──────────────────────────────────────────
 
-	addCiteCommand(format: import('./types').CitationFormat) {
+	private _registerCiteCommand(format: import('./types').CitationFormat) {
+		const id = `${CITE_CMD_PREFIX}${format.name}`;
+		if (this.registeredCiteCommandIds.has(id)) return;
 		this.addCommand({
-			id: `${CITE_CMD_PREFIX}${format.name}`,
+			id,
 			name: `Insert citation: ${format.name}`,
 			editorCallback: async (editor) => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') { warnNoConnection(); return; }
 
+				// Re-read format from current settings so name/template changes are picked up
+				const current = this.settings.citeFormats.find((f) => f.name === format.name) ?? format;
 				let result: string | null = null;
-				if (format.format === 'template' && format.template?.trim()) {
-					result = await renderCiteTemplate(this.app, { database: db, format });
+				if (current.format === 'template' && current.template?.trim()) {
+					result = await renderCiteTemplate(this.app, { database: db, format: current });
 				} else {
-					result = await getCAYW(format, db);
+					result = await getCAYW(current, db);
 				}
 				if (typeof result === 'string') editor.replaceSelection(result);
 			},
 		});
+		this.registeredCiteCommandIds.add(id);
 	}
 
-	addExportCommand(format: import('./types').ExportFormat) {
+	private _registerExportCommand(format: import('./types').ExportFormat) {
+		const id = `${EXPORT_CMD_PREFIX}${format.name}`;
+		if (this.registeredExportCommandIds.has(id)) return;
 		this.addCommand({
-			id: `${EXPORT_CMD_PREFIX}${format.name}`,
+			id,
 			name: `Export to Markdown: ${format.name}`,
 			callback: async () => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') { warnNoConnection(); return; }
 
+				const current = this.settings.exportFormats.find((f) => f.name === format.name) ?? format;
 				const paths = await exportToMarkdown(this.app, {
 					settings: this.settings,
 					database: db,
-					exportFormat: format,
+					exportFormat: current,
 				});
 				await this.openNotes(paths);
 			},
 		});
+		this.registeredExportCommandIds.add(id);
 	}
 
-	removeCiteCommand(format: import('./types').CitationFormat) {
-		(this.app as any).commands.removeCommand(`${CMD_PREFIX}${CITE_CMD_PREFIX}${format.name}`);
+	private _removeCommand(fullId: string) {
+		(this.app as any).commands.removeCommand(fullId);
 	}
 
-	removeExportCommand(format: import('./types').ExportFormat) {
-		(this.app as any).commands.removeCommand(`${CMD_PREFIX}${EXPORT_CMD_PREFIX}${format.name}`);
+	// Called from settings whenever formats change — removes stale commands and adds new ones.
+	reconcileCommands() {
+		const currentCiteIds = new Set(this.settings.citeFormats.map((f) => `${CITE_CMD_PREFIX}${f.name}`));
+		const currentExportIds = new Set(this.settings.exportFormats.map((f) => `${EXPORT_CMD_PREFIX}${f.name}`));
+
+		// Remove stale cite commands
+		for (const id of this.registeredCiteCommandIds) {
+			if (!currentCiteIds.has(id)) {
+				this._removeCommand(`${CMD_PREFIX}${id}`);
+				this.registeredCiteCommandIds.delete(id);
+			}
+		}
+		// Remove stale export commands
+		for (const id of this.registeredExportCommandIds) {
+			if (!currentExportIds.has(id)) {
+				this._removeCommand(`${CMD_PREFIX}${id}`);
+				this.registeredExportCommandIds.delete(id);
+			}
+		}
+
+		// Add any new ones
+		for (const fmt of this.settings.citeFormats) this._registerCiteCommand(fmt);
+		for (const fmt of this.settings.exportFormats) this._registerExportCommand(fmt);
 	}
 
 	// ── Open notes after import ───────────────────────────────────────────────
@@ -176,5 +208,6 @@ export default class ZoteroManager extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		if (this.citeSuggest) this.citeSuggest.updateSettings(this.settings);
+		this.reconcileCommands();
 	}
 }
