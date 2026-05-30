@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { App, Editor, Notice, TFile, TFolder, htmlToMarkdown, moment, normalizePath } from 'obsidian';
+import { App, Editor, Modal, Notice, Setting, TFile, TFolder, htmlToMarkdown, moment, normalizePath } from 'obsidian';
 import path from 'path';
 import { CiteKey, DatabaseWithPort } from '../types';
 import { getVaultRoot } from '../helpers';
@@ -138,8 +138,14 @@ function formatNativeAnnotation(annot: any, attachment: any): string {
 		case 'highlight':
 		case 'underline': {
 			lines.push(`## ${color}${pageStr}`);
-			if (annot.annotationText) lines.push(`"${annot.annotationText}"`);
-			if (annot.annotationComment) lines.push(annot.annotationComment);
+			const parts: string[] = [];
+			if (annot.annotationText) parts.push(annot.annotationText);
+			if (annot.annotationComment) parts.push(annot.annotationComment);
+			if (parts.length === 1) {
+				lines.push(parts[0]);
+			} else if (parts.length > 1) {
+				lines.push(parts.map((p) => `- ${p}`).join('\n'));
+			}
 			break;
 		}
 		case 'note': {
@@ -258,6 +264,42 @@ export async function filesFromNotes(
 	return files.map((f) => f.path);
 }
 
+class ConfirmOverwriteModal extends Modal {
+	private message: string;
+	private resolve: (confirmed: boolean) => void;
+
+	constructor(app: App, filePath: string, resolve: (confirmed: boolean) => void) {
+		super(app);
+		this.message = `"${filePath}" already exists. Overwrite it?`;
+		this.resolve = resolve;
+	}
+
+	onOpen() {
+		this.contentEl.createEl('p', { text: this.message });
+		new Setting(this.contentEl)
+			.addButton((btn) =>
+				btn.setButtonText('Overwrite').setCta().onClick(() => {
+					this.resolve(true);
+					this.close();
+				})
+			)
+			.addButton((btn) =>
+				btn.setButtonText('Cancel').onClick(() => {
+					this.resolve(false);
+					this.close();
+				})
+			);
+	}
+
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
+function confirmOverwrite(app: App, filePath: string): Promise<boolean> {
+	return new Promise((resolve) => new ConfirmOverwriteModal(app, filePath, resolve).open());
+}
+
 async function newNoteFile(
 	app: App,
 	folder: string,
@@ -270,6 +312,8 @@ async function newNoteFile(
 	let file = app.vault.getAbstractFileByPath(filePath) as TFile | null;
 	try {
 		if (file) {
+			const confirmed = await confirmOverwrite(app, filePath);
+			if (!confirmed) return null;
 			await app.vault.modify(file, content);
 		} else {
 			await mkMDDir(app, filePath);
