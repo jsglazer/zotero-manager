@@ -129,25 +129,37 @@ function formatNativeAnnotation(annot: any, attachment: any): string {
 	const uri = attachment.uri
 		? getLocalURI('open-pdf', attachment.uri, { page, annotation: annot.key })
 		: '';
-	const link = uri ? ` [Go to annotation](${uri})` : '';
-	const pageRef = page ? ` (p. ${page})` : '';
+	const link = uri ? `[Go to annotation](${uri})` : '';
+	const pageStr = page ? ` — p. ${page}` : '';
+
+	const lines: string[] = [];
 
 	switch (annot.annotationType) {
 		case 'highlight':
 		case 'underline': {
-			const text = annot.annotationText ? `> "${annot.annotationText}"${pageRef}` : '';
-			const comment = annot.annotationComment ? `\n> \n> 💬 ${annot.annotationComment}` : '';
-			return `> [!${color.toLowerCase()}]+ ${color}${link}\n${text}${comment}`.trim();
+			lines.push(`## ${color}${pageStr}`);
+			if (annot.annotationText) lines.push(`"${annot.annotationText}"`);
+			if (annot.annotationComment) lines.push(annot.annotationComment);
+			break;
 		}
 		case 'note': {
-			return `> [!note]+ Note${pageRef}${link}\n> ${annot.annotationComment ?? ''}`.trim();
+			lines.push(`## Note${pageStr}`);
+			if (annot.annotationComment) lines.push(annot.annotationComment);
+			break;
 		}
 		case 'image': {
-			return `> [!image]+ Image${pageRef}${link}`.trim();
+			lines.push(`## Image${pageStr}`);
+			if (annot.annotationComment) lines.push(annot.annotationComment);
+			break;
 		}
-		default:
-			return annot.annotationComment ?? '';
+		default: {
+			lines.push(`## Annotation${pageStr}`);
+			if (annot.annotationComment) lines.push(annot.annotationComment);
+		}
 	}
+
+	if (link) lines.push(link);
+	return lines.join('\n\n');
 }
 
 // ── Note export prompt ────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { Notice, request } from 'obsidian';
 import { CiteKey, CiteKeyExport, CitationFormat, DatabaseWithPort } from '../types';
+import { focusObsidian } from '../helpers';
 import { DEFAULT_HEADERS, getBBTBase, isBBTRunning } from './connection';
 import { getBibFromCiteKeys, getItemJSONFromCiteKeys, getUserGroups } from './jsonRPC';
 import { ZQueue } from './queue';
@@ -44,11 +45,11 @@ export async function getCAYWRaw(
 			headers: DEFAULT_HEADERS,
 		});
 		ZQueue.end(qid);
-		window.focus();
+		focusObsidian();
 		return res;
 	} catch (e) {
 		ZQueue.end(qid);
-		window.focus();
+		focusObsidian();
 		console.error(e);
 		new Notice(`Error processing citation: ${(e as Error).message}`, 10000);
 		return null;
