@@ -126,6 +126,7 @@ year: {{year}}
 
 {% for attachment in attachments %}
 {% for annotation in attachment.annotations %}
+
 ### {{annotation.colorCategory}} — p. {{annotation.pageLabel}}
 
 {{annotation.annotatedText}}
@@ -234,6 +235,8 @@ This contradicts the Smith 2019 meta-analysis.
 | Template engine | Nunjucks | Nunjucks (compatible) |
 
 ---
+
+Build with Claude!
 
 ## License
 
