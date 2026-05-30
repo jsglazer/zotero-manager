@@ -1,0 +1,28 @@
+{
+	"name": "zotero-manager",
+	"version": "0.1.0",
+	"description": "Insert and import citations, bibliographies, notes, and PDF annotations from Zotero.",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "node esbuild.config.mjs production",
+		"check-types": "tsc --noemit"
+	},
+	"keywords": [],
+	"author": "jsglazer",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/nunjucks": "^3.2.6",
+		"@types/node": "^20.14.0",
+		"builtin-modules": "^3.3.0",
+		"esbuild": "^0.21.5",
+		"obsidian": "^1.7.2",
+		"tslib": "^2.6.3",
+		"typescript": "^5.4.5"
+	},
+	"dependencies": {
+		"fuse.js": "^7.0.0",
+		"nunjucks": "^3.2.4",
+		"preact": "^10.22.0"
+	}
+}

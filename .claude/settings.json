@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Users/josh/Dev/Plugins/zotero-manager/**)",
+      "Write(/Users/josh/Dev/Plugins/zotero-manager/**)",
+      "Edit(/Users/josh/Dev/Plugins/zotero-manager/**)",
+      "Read(/Users/josh/VaultDEV/zotero-manager/**)",
+      "Write(/Users/josh/VaultDEV/zotero-manager/**)",
+      "Edit(/Users/josh/VaultDEV/zotero-manager/**)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(ls*)",
+      "Bash(find*)",
+      "Bash(mkdir*)",
+      "Bash(cat*)",
+      "Bash(grep*)"
+    ]
+  }
+}

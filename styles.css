@@ -1,0 +1,20 @@
+/* Zotero Manager */
+
+.zotero-manager-search-modal .prompt-results {
+	max-height: 400px;
+}
+
+.zotero-manager-search-result-title {
+	font-weight: 500;
+}
+
+.zotero-manager-search-result-meta {
+	font-size: 0.85em;
+	color: var(--text-muted);
+}
+
+.zotero-manager-data-explorer {
+	padding: 12px;
+	font-size: 0.9em;
+	overflow: auto;
+}
