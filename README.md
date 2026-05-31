@@ -119,6 +119,52 @@ Set a **Note import folder** (with autocomplete) for the **Import notes** comman
 
 ---
 
+## Dataview Integration
+
+Zotero Manager integrates with the [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin automatically — no configuration required. If Dataview is installed and enabled, the plugin injects a `citekeys` field into Dataview's index for every note that contains citations.
+
+> **No files are modified.** Fields are injected directly into Dataview's in-memory index at runtime, exactly as the Obsidian Annotation Manager plugin does. Your notes stay clean.
+
+### Which citations are detected
+
+| Format | Example | Detected |
+|--------|---------|---------|
+| Pandoc | `@smith2020` | ✅ |
+| Pandoc bracketed | `[@smith2020]` or `[@key1; @key2]` | ✅ |
+| LaTeX `\cite` | `\cite{smith2020}` | ✅ |
+| LaTeX variants | `\autocite{}`, `\parencite{}`, `\textcite{}`, etc. | ✅ |
+| Formatted citation | (Smith, 2020) | ❌ (no parseable key) |
+| Template output | depends on template | ✅ if `@key` or `\cite{}` pattern used |
+
+### Querying with Dataview
+
+**Find all notes that cite a specific paper:**
+```dataview
+TABLE file.link, citekeys
+FROM "Notes"
+WHERE contains(citekeys, "smith2020")
+```
+
+**List all cited papers across a folder:**
+```dataview
+TABLE citekeys
+FROM "Literature"
+WHERE citekeys
+```
+
+**Find notes citing multiple specific papers:**
+```dataview
+TABLE file.link
+FROM "Notes"
+WHERE contains(citekeys, "smith2020") AND contains(citekeys, "jones2021")
+```
+
+**Imported notes** (via **Import notes** command) also get a `citekeys` field injected automatically with the Zotero item's cite key.
+
+**Exported notes** (via **Export to Markdown**) are queryable via their template frontmatter — any fields you put in your template's YAML block (e.g. `citekey`, `title`, `year`) are natively visible to Dataview without any injection.
+
+---
+
 ## Cite Key Autocomplete
 
 Type `@` in any note to open a fuzzy-search suggestion list over your Zotero library. Select an entry to insert using the configured **Insertion template** (default: `[[{{citekey}}]]`).
