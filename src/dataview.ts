@@ -4,7 +4,7 @@ import type ZoteroManager from './main';
 // ── Citation pattern detection ────────────────────────────────────────────────
 
 // @citekey  or  [@citekey]  or  [@key1; @key2]
-const PANDOC_RE = /@([\w][\\w:./-]*)/g;
+const PANDOC_RE = /@([\w][\w:./-]*)/g;
 
 // \cite{key}, \autocite{key,key2}, \parencite{key}, etc.
 const LATEX_RE = /\\(?:cite|autocite|parencite|textcite|footcite|nocite|citep|citet|Cite|Autocite)\*?\{([^}]+)\}/g;

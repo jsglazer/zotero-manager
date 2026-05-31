@@ -93,8 +93,8 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 			const key = this.plugin.settings.webApiKey ?? '';
 			const userId = this.plugin.settings.webApiUserId ?? '';
 			if (!key || !userId) {
-				apiBadge.setText('—');
-				apiBadge.className = 'zm-connection-badge zm-connection-checking';
+				apiBadge.setText('Unvalidated');
+				apiBadge.className = 'zm-connection-badge zm-connection-unlinked';
 				return;
 			}
 			apiBadge.setText('Checking…');
