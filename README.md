@@ -296,7 +296,6 @@ The heading uses the **color label** configured in Settings (e.g. `Key` for a ye
 
 - Highlights and underlines with both annotated text and a comment render each as a bullet
 - Notes and images show the comment text
-- All annotations include a deep link back to the exact location in the PDF
 
 ---
 
