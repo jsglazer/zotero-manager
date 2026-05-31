@@ -216,7 +216,7 @@ export async function exportToMarkdown(
 			if (attachmentData?.annotations) {
 				for (const annot of attachmentData.annotations) {
 					attachmentAnnots.push(
-						convertNativeAnnotation(annot, attachment, imageOutputPath, imageRelativePath, imageBaseName, true)
+						convertNativeAnnotation(annot, attachment, imageOutputPath, imageRelativePath, imageBaseName, true, settings.colorLabels)
 					);
 				}
 			}

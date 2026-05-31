@@ -64,11 +64,23 @@ export interface ZoteroManagerSettings {
 	whichNotesToOpenAfterImport: NotesToOpenAfterImport;
 	// Annotations
 	shouldConcat: boolean;
+	colorLabels: Record<string, string>;
 	// PDF image extraction settings (retained for compatibility, unused without binary)
 	pdfExportImageDPI: number;
 	pdfExportImageFormat: string;
 	pdfExportImageQuality: number;
 }
+
+export const DEFAULT_COLOR_LABELS: Record<string, string> = {
+	Yellow: 'Key',
+	Red: 'Nav',
+	Green: 'Argument',
+	Blue: 'Background',
+	Purple: 'Source',
+	Magenta: 'Error',
+	Orange: 'Definition',
+	Gray: 'Date',
+};
 
 export const DEFAULT_SETTINGS: ZoteroManagerSettings = {
 	database: 'Zotero',
@@ -79,6 +91,7 @@ export const DEFAULT_SETTINGS: ZoteroManagerSettings = {
 	openNoteAfterImport: false,
 	whichNotesToOpenAfterImport: 'first-imported-note',
 	shouldConcat: false,
+	colorLabels: { ...DEFAULT_COLOR_LABELS },
 	pdfExportImageDPI: 120,
 	pdfExportImageFormat: 'jpg',
 	pdfExportImageQuality: 90,

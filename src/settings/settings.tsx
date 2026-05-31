@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type ZoteroManager from '../main';
-import { CitationFormat, ExportFormat } from '../types';
+import { CitationFormat, DEFAULT_COLOR_LABELS, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
 import { validateWebApiKey } from '../zotero/webAPI';
 import { FolderSuggest } from '../ui/FolderSuggest';
@@ -248,6 +248,27 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		containerEl.createEl('h3', { text: 'Color labels' });
+		containerEl.createEl('p', {
+			text: 'Rename Zotero annotation colors on import. The left column shows the fixed Zotero color name; the right column is the label used in your notes.',
+			cls: 'setting-item-description',
+		});
+
+		const colorLabels = this.plugin.settings.colorLabels ?? {};
+		for (const zoteroColor of Object.keys(DEFAULT_COLOR_LABELS)) {
+			new Setting(containerEl)
+				.setName(zoteroColor)
+				.addText((t) =>
+					t
+						.setPlaceholder(DEFAULT_COLOR_LABELS[zoteroColor])
+						.setValue(colorLabels[zoteroColor] ?? DEFAULT_COLOR_LABELS[zoteroColor])
+						.onChange(async (v) => {
+							this.plugin.settings.colorLabels[zoteroColor] = v || DEFAULT_COLOR_LABELS[zoteroColor];
+							await this.plugin.saveSettings();
+						})
+				);
+		}
 	}
 
 	private renderCiteFormat(el: HTMLElement, fmt: CitationFormat, index: number) {

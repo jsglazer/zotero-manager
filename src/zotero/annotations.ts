@@ -64,15 +64,18 @@ export function convertNativeAnnotation(
 	imageOutputPath: string,
 	imageRelativePath: string,
 	imageBaseName: string,
-	copy = false
+	copy = false,
+	colorLabels?: Record<string, string>
 ): Record<string, any> {
+	const colorCategory = getColorCategory(annotation.annotationColor ?? '#000000');
 	const annot: Record<string, any> = {
 		date: moment(annotation.dateModified),
 		attachment,
 		id: annotation.key,
 		type: annotation.annotationType,
 		color: annotation.annotationColor,
-		colorCategory: getColorCategory(annotation.annotationColor ?? '#000000'),
+		colorCategory,
+		colorLabel: colorLabels?.[colorCategory] ?? colorCategory,
 		source: 'zotero',
 	};
 

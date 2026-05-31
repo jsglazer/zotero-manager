@@ -51,7 +51,7 @@ export default class ZoteroManager extends Plugin {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') { warnNoConnection(); return; }
-				const notes = await noteExportPrompt(db, this.app.workspace.getActiveFile()?.parent?.path);
+				const notes = await noteExportPrompt(db, this.app.workspace.getActiveFile()?.parent?.path, this.settings.colorLabels);
 				if (notes) insertNotesIntoCurrentDoc(editor, notes);
 			},
 		});
@@ -63,7 +63,7 @@ export default class ZoteroManager extends Plugin {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') { warnNoConnection(); return; }
-				const notes = await noteExportPrompt(db, this.settings.noteImportFolder);
+				const notes = await noteExportPrompt(db, this.settings.noteImportFolder, this.settings.colorLabels);
 				if (notes) {
 					const imported = await filesFromNotes(this.app, this.settings.noteImportFolder, notes);
 					for (const { path, citekey } of imported) {

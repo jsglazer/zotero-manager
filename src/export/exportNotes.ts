@@ -123,8 +123,9 @@ async function getAvailablePathForAttachments(
 
 // ── Native annotation formatter ───────────────────────────────────────────────
 
-function formatNativeAnnotation(annot: any, attachment: any): string {
-	const color = getColorCategory(annot.annotationColor ?? '#ffff00');
+function formatNativeAnnotation(annot: any, attachment: any, colorLabels?: Record<string, string>): string {
+	const colorCategory = getColorCategory(annot.annotationColor ?? '#ffff00');
+	const color = colorLabels?.[colorCategory] ?? colorCategory;
 	const page = annot.annotationPageLabel ?? '';
 	const uri = attachment.uri
 		? getLocalURI('open-pdf', attachment.uri, { page, annotation: annot.key })
@@ -172,7 +173,8 @@ function formatNativeAnnotation(annot: any, attachment: any): string {
 
 export async function noteExportPrompt(
 	db: DatabaseWithPort,
-	destination?: string
+	destination?: string,
+	colorLabels?: Record<string, string>
 ): Promise<Record<string, string> | undefined> {
 	const citeKeys = await getCiteKeys(db);
 	if (!citeKeys.length) return;
@@ -197,7 +199,7 @@ export async function noteExportPrompt(
 				if (annot.annotationType === 'image') {
 					images[annot.key] = annot.annotationImagePath;
 				}
-				annotLines.push(formatNativeAnnotation(annot, a));
+				annotLines.push(formatNativeAnnotation(annot, a, colorLabels));
 			}
 		}
 
