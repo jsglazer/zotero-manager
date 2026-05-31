@@ -57,7 +57,7 @@ Use this when Zotero is not running locally, or Better BibTeX is not installed.
 
 **Step 1 — Create an API key**
 
-1. Log in to [zotero.org](https://www.zotero.org/) and go to **Settings → Feeds/API → [Create new private key](https://www.zotero.org/settings/keys/new)**.
+1. Log in to [zotero.org](https://www.zotero.org/) and go to **Settings → Security → Applications → Create new private key**.
 2. Give the key a name (e.g. *Obsidian*).
 3. Under **Personal Library**, enable **Allow library access** and **Allow notes access**.
 4. If you use group libraries, enable **Allow library access** for each group under **Default Group Permissions** or individually.
