@@ -65,7 +65,7 @@ Use this when Zotero is not running locally, or Better BibTeX is not installed.
 
 **Step 2 — Find your user ID**
 
-Your numeric user ID appears on the same [Feeds/API settings page](https://www.zotero.org/settings/keys) under *"Your userID for use in API calls is XXXXXXX"*.
+Your numeric user ID appears on the **Settings → Security** page (the same page where your API keys are listed).
 
 **Step 3 — Enter credentials in Obsidian**
 
