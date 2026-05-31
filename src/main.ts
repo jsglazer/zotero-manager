@@ -7,6 +7,7 @@ import { noteExportPrompt, insertNotesIntoCurrentDoc, filesFromNotes } from './e
 import { ZoteroManagerSettingsTab } from './settings/settings';
 import { CiteSuggest } from './ui/CiteSuggest';
 import { DataExplorerView, DATA_EXPLORER_VIEW } from './ui/DataExplorerView';
+import { DataviewIntegration } from './dataview';
 
 const CMD_PREFIX = 'zotero-manager:';
 const CITE_CMD_PREFIX = 'zm-cite-';
@@ -14,6 +15,7 @@ const EXPORT_CMD_PREFIX = 'zm-export-';
 
 export default class ZoteroManager extends Plugin {
 	settings!: ZoteroManagerSettings;
+	dataview!: DataviewIntegration;
 	private citeSuggest!: CiteSuggest;
 	private registeredCiteCommandIds = new Set<string>();
 	private registeredExportCommandIds = new Set<string>();
@@ -27,6 +29,9 @@ export default class ZoteroManager extends Plugin {
 
 		this.citeSuggest = new CiteSuggest(this.app, this.settings);
 		this.registerEditorSuggest(this.citeSuggest);
+
+		this.dataview = new DataviewIntegration(this);
+		this.app.workspace.onLayoutReady(() => this.dataview.setup());
 
 		// Register configured citation commands
 		for (const fmt of this.settings.citeFormats) {
@@ -60,8 +65,11 @@ export default class ZoteroManager extends Plugin {
 				if (mode === 'none') { warnNoConnection(); return; }
 				const notes = await noteExportPrompt(db, this.settings.noteImportFolder);
 				if (notes) {
-					const paths = await filesFromNotes(this.app, this.settings.noteImportFolder, notes);
-					await this.openNotes(paths);
+					const imported = await filesFromNotes(this.app, this.settings.noteImportFolder, notes);
+					for (const { path, citekey } of imported) {
+						this.dataview.injectForImportedNote(path, citekey);
+					}
+					await this.openNotes(imported.map((i) => i.path));
 				}
 			},
 		});
@@ -104,7 +112,10 @@ export default class ZoteroManager extends Plugin {
 				} else {
 					result = await getCAYW(current, db);
 				}
-				if (typeof result === 'string') editor.replaceSelection(result);
+				if (typeof result === 'string') {
+				editor.replaceSelection(result);
+				await this.dataview.injectForActiveFile();
+			}
 			},
 		});
 		this.registeredCiteCommandIds.add(id);

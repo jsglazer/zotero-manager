@@ -254,14 +254,14 @@ export async function filesFromNotes(
 	app: App,
 	folder: string,
 	notes: Record<string, string>
-): Promise<string[]> {
-	const files: TFile[] = [];
-	for (const [key, content] of Object.entries(notes)) {
-		const file = await newNoteFile(app, folder, key, content);
+): Promise<Array<{ path: string; citekey: string }>> {
+	const results: Array<{ path: string; citekey: string }> = [];
+	for (const [citekey, content] of Object.entries(notes)) {
+		const file = await newNoteFile(app, folder, citekey, content);
 		if (!file) break;
-		files.push(file);
+		results.push({ path: file.path, citekey });
 	}
-	return files.map((f) => f.path);
+	return results;
 }
 
 class ConfirmOverwriteModal extends Modal {
