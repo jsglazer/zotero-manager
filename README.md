@@ -49,7 +49,34 @@ Open **Settings → Zotero Manager**. The **Linked** / **Not Linked** badge next
 - **Juris-M** — uses port 24119
 - **Custom** — specify your own port
 
-If Better BibTeX is not available, enter your **Zotero API key** and **user/group ID** in the Web API section to enable fallback mode.
+If Better BibTeX is not available, configure the Web API fallback as described below.
+
+### 1a. Zotero Web API fallback (optional)
+
+Use this when Zotero is not running locally, or Better BibTeX is not installed.
+
+**Step 1 — Create an API key**
+
+1. Log in to [zotero.org](https://www.zotero.org/) and go to **Settings → Feeds/API → [Create new private key](https://www.zotero.org/settings/keys/new)**.
+2. Give the key a name (e.g. *Obsidian*).
+3. Under **Personal Library**, enable **Allow library access** and **Allow notes access**.
+4. If you use group libraries, enable **Allow library access** for each group under **Default Group Permissions** or individually.
+5. Click **Save Key** and copy the key string shown — it is only displayed once.
+
+**Step 2 — Find your user ID**
+
+Your numeric user ID appears on the same [Feeds/API settings page](https://www.zotero.org/settings/keys) under *"Your userID for use in API calls is XXXXXXX"*.
+
+**Step 3 — Enter credentials in Obsidian**
+
+Open **Settings → Zotero Manager → Zotero Web API (fallback)**:
+
+- **API key** — paste the key from Step 1
+- **User / group ID** — enter your numeric user ID from Step 2
+
+The plugin will automatically use the Web API whenever the local Zotero/BBT connection is unavailable.
+
+> **Note:** The Web API does not support the Zotero item picker (CAYW). In fallback mode, use the **Insert notes into current document** or **Import notes** commands, which will present an in-Obsidian search modal instead.
 
 ### 2. Create citation formats
 
