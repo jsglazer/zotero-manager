@@ -4,6 +4,7 @@ import { CitationFormat, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
 import { validateWebApiKey } from '../zotero/webAPI';
 import { FolderSuggest } from '../ui/FolderSuggest';
+import { FileSuggest } from '../ui/FileSuggest';
 
 export class ZoteroManagerSettingsTab extends PluginSettingTab {
 	plugin: ZoteroManager;
@@ -374,15 +375,15 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		new Setting(el)
 			.setName('Template path')
 			.setDesc('Vault path to the Nunjucks template file.')
-			.addText((t) =>
-				t
-					.setPlaceholder('Templates/zotero.md')
-					.setValue(fmt.templatePath ?? '')
-					.onChange(async (v) => {
-						this.plugin.settings.exportFormats[index].templatePath = v;
-						await this.plugin.saveSettings();
-					})
-			);
+			.addText((t) => {
+				t.setPlaceholder('Templates/zotero.md').setValue(fmt.templatePath ?? '');
+				new FileSuggest(this.app, t.inputEl);
+				t.onChange(async (v) => {
+					this.plugin.settings.exportFormats[index].templatePath = v;
+					await this.plugin.saveSettings();
+				});
+				return t;
+			});
 
 		new Setting(el)
 			.setName('Output path template')
