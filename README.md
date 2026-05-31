@@ -289,7 +289,6 @@ The key finding was that treatment effects vary significantly by subgroup.
 
 This contradicts the Smith 2019 meta-analysis.
 
-[Go to annotation](zotero://open-pdf/library/items/ABCD1234?page=12&annotation=XY12)
 ```
 
 The heading uses the **color label** configured in Settings (e.g. `Key` for a yellow highlight). To use raw Zotero color names instead, set each label to match its color (Yellow, Red, etc.).
