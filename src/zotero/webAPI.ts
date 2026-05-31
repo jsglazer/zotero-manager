@@ -18,6 +18,25 @@ function userBase(settings: ZoteroManagerSettings): string {
 	return `${API_BASE}/users/${settings.webApiUserId}`;
 }
 
+// ── Key validation ────────────────────────────────────────────────────────────
+
+export async function validateWebApiKey(
+	apiKey: string,
+	userId: string
+): Promise<boolean> {
+	if (!apiKey || !userId) return false;
+	try {
+		await request({
+			method: 'GET',
+			url: `${API_BASE}/users/${userId}/items?limit=1&format=json`,
+			headers: headers(apiKey),
+		});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 // ── Search ────────────────────────────────────────────────────────────────────
 
 export interface WebAPIItem {

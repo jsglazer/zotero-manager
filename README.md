@@ -76,6 +76,8 @@ Open **Settings → Zotero Manager → Zotero Web API (fallback)**:
 
 The plugin will automatically use the Web API whenever the local Zotero/BBT connection is unavailable.
 
+A **Valid** (green) / **Invalid** (red) badge appears next to the API key field and updates whenever the key or user ID changes, confirming the credentials work before you use them.
+
 > **Note:** The Web API does not support the Zotero item picker (CAYW). In fallback mode, use the **Insert notes into current document** or **Import notes** commands, which will present an in-Obsidian search modal instead.
 
 ### 2. Create citation formats

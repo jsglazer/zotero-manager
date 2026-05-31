@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import type ZoteroManager from '../main';
 import { CitationFormat, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
+import { validateWebApiKey } from '../zotero/webAPI';
 import { FolderSuggest } from '../ui/FolderSuggest';
 
 export class ZoteroManagerSettingsTab extends PluginSettingTab {
@@ -68,7 +69,8 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 			cls: 'setting-item-description',
 		});
 
-		new Setting(containerEl)
+		// API key setting with validation badge
+		const apiKeySetting = new Setting(containerEl)
 			.setName('API key')
 			.setDesc('Your Zotero Web API key (from zotero.org/settings/keys).')
 			.addText((t) =>
@@ -78,8 +80,32 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 					.onChange(async (v) => {
 						this.plugin.settings.webApiKey = v;
 						await this.plugin.saveSettings();
+						await probeAndUpdateBadge();
 					})
 			);
+
+		const apiBadge = apiKeySetting.controlEl.createEl('span', {
+			text: 'Checking…',
+			cls: 'zm-connection-badge zm-connection-checking',
+		});
+
+		const probeAndUpdateBadge = async () => {
+			const key = this.plugin.settings.webApiKey ?? '';
+			const userId = this.plugin.settings.webApiUserId ?? '';
+			if (!key || !userId) {
+				apiBadge.setText('—');
+				apiBadge.className = 'zm-connection-badge zm-connection-checking';
+				return;
+			}
+			apiBadge.setText('Checking…');
+			apiBadge.className = 'zm-connection-badge zm-connection-checking';
+			const valid = await validateWebApiKey(key, userId);
+			apiBadge.setText(valid ? 'Valid' : 'Invalid');
+			apiBadge.className = `zm-connection-badge ${valid ? 'zm-connection-linked' : 'zm-connection-unlinked'}`;
+		};
+
+		// Probe on settings open
+		probeAndUpdateBadge();
 
 		new Setting(containerEl)
 			.setName('User / group ID')
@@ -91,6 +117,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 					.onChange(async (v) => {
 						this.plugin.settings.webApiUserId = v;
 						await this.plugin.saveSettings();
+						await probeAndUpdateBadge();
 					})
 			);
 
