@@ -106,6 +106,25 @@ Each export format becomes an **Export to Markdown: [name]** command. Configure:
 
 Set a **Note import folder** (with autocomplete) for the **Import notes** command. Toggle **Open note after import** to automatically open newly created files.
 
+### 5. Configure color labels (optional)
+
+Under **Settings → Zotero Manager → Annotations → Color labels**, you can rename each of Zotero's eight fixed annotation colors to a label that fits your workflow. The left column shows the Zotero color name (which cannot be changed in Zotero); the right column is the label that appears in imported notes and in the `colorLabel` template variable.
+
+**Defaults:**
+
+| Zotero color | Default label |
+|--------------|--------------|
+| Yellow | Key |
+| Red | Nav |
+| Green | Argument |
+| Blue | Background |
+| Purple | Source |
+| Magenta | Error |
+| Orange | Definition |
+| Gray | Date |
+
+Leaving a field blank reverts it to its default.
+
 ---
 
 ## Commands
@@ -202,7 +221,7 @@ year: {{year}}
 {% for attachment in attachments %}
 {% for annotation in attachment.annotations %}
 
-### {{annotation.colorCategory}} — p. {{annotation.pageLabel}}
+### {{annotation.colorLabel}} — p. {{annotation.pageLabel}}
 
 {{annotation.annotatedText}}
 
@@ -238,7 +257,8 @@ year: {{year}}
 |----------|-------------|
 | `type` | `highlight`, `underline`, `note`, `image` |
 | `color` | Hex color |
-| `colorCategory` | Human name: Yellow, Red, Green, … |
+| `colorCategory` | Zotero color name: Yellow, Red, Green, … |
+| `colorLabel` | User-defined label (see Color labels setting); falls back to `colorCategory` |
 | `annotatedText` | Highlighted/underlined text |
 | `comment` | User's annotation comment |
 | `pageLabel` | Page label string |
@@ -263,7 +283,7 @@ Anything written here survives the next re-import.
 When using **Import notes**, PDF annotations are formatted as:
 
 ```markdown
-## Yellow — p. 12
+## Key — p. 12
 
 The key finding was that treatment effects vary significantly by subgroup.
 
@@ -271,6 +291,8 @@ This contradicts the Smith 2019 meta-analysis.
 
 [Go to annotation](zotero://open-pdf/library/items/ABCD1234?page=12&annotation=XY12)
 ```
+
+The heading uses the **color label** configured in Settings (e.g. `Key` for a yellow highlight). To use raw Zotero color names instead, set each label to match its color (Yellow, Red, etc.).
 
 - Highlights and underlines with both annotated text and a comment render each as a bullet
 - Notes and images show the comment text
