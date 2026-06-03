@@ -7,8 +7,7 @@ An Obsidian plugin for querying and importing bibliographic information, PDF ann
 ## Features
 
 - **Insert citations** — trigger Zotero's item picker and insert formatted citations directly at the cursor (LaTeX, BibLaTeX, Pandoc, formatted citation/bibliography, or custom Nunjucks template)
-- **Export to Markdown** — export Zotero items to Obsidian notes using fully customizable Nunjucks templates, with support for persist blocks that survive re-imports
-- **Import annotations** — pull PDF highlights, underlines, notes, and image annotations from Zotero 6's native annotation store directly into Obsidian (no external binary required)
+- **Import annotations** — pull PDF highlights, underlines, notes, and image annotations from Zotero directly into Obsidian
 - **Import notes** — import Zotero text notes (including embedded annotation links) as Obsidian files
 - **Cite key autocomplete** — type `@` in any note to trigger fuzzy-search autocomplete over your entire Zotero library
 - **Data explorer** — sidebar view to inspect the full data object available to your templates
