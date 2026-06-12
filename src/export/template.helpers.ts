@@ -47,7 +47,10 @@ export function replaceIllegalChars(str: string): string {
 
 export function sanitizeFilePath(filePath: string): string {
 	const parsed = path.parse(filePath);
-	return path.join(replaceIllegalChars(parsed.dir), `${replaceIllegalChars(parsed.name)}${parsed.ext}`);
+	return path.join(
+		replaceIllegalChars(parsed.dir),
+		`${replaceIllegalChars(parsed.name)}${parsed.ext}`,
+	);
 }
 
 export async function mkMDDir(app: App, mdPath: string): Promise<void> {
@@ -69,7 +72,7 @@ async function readTemplate(app: App, tplPath?: string): Promise<string | null> 
 
 export async function getTemplates(
 	app: App,
-	params: ExportToMarkdownParams
+	params: ExportToMarkdownParams,
 ): Promise<{ template: string | null }> {
 	const template = await readTemplate(app, params.exportFormat.templatePath);
 	return { template };

@@ -1,4 +1,12 @@
-import { App, Editor, EditorPosition, EditorSuggest, EditorSuggestContext, EditorSuggestTriggerInfo, TFile } from 'obsidian';
+import {
+	App,
+	Editor,
+	EditorPosition,
+	EditorSuggest,
+	EditorSuggestContext,
+	EditorSuggestTriggerInfo,
+	TFile,
+} from 'obsidian';
 import Fuse from 'fuse.js';
 import { CiteKeyExport, ZoteroManagerSettings } from '../types';
 import { getAllCiteKeysForSuggest } from '../zotero/cayw';
@@ -28,7 +36,11 @@ export class CiteSuggest extends EditorSuggest<CiteKeyExport> {
 		this.fuse.setCollection(this.keys);
 	}
 
-	onTrigger(cursor: EditorPosition, editor: Editor, _file: TFile | null): EditorSuggestTriggerInfo | null {
+	onTrigger(
+		cursor: EditorPosition,
+		editor: Editor,
+		_file: TFile | null,
+	): EditorSuggestTriggerInfo | null {
 		const line = editor.getLine(cursor.line);
 		const sub = line.slice(0, cursor.ch);
 		const match = sub.match(/@([\w-]*)$/);
@@ -43,7 +55,10 @@ export class CiteSuggest extends EditorSuggest<CiteKeyExport> {
 	async getSuggestions(ctx: EditorSuggestContext): Promise<CiteKeyExport[]> {
 		if (!this.keys.length) await this.refreshKeys();
 		if (!ctx.query) return this.keys.slice(0, 10);
-		return this.fuse.search(ctx.query).map((r) => r.item).slice(0, 10);
+		return this.fuse
+			.search(ctx.query)
+			.map((r) => r.item)
+			.slice(0, 10);
 	}
 
 	renderSuggestion(item: CiteKeyExport, el: HTMLElement) {

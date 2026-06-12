@@ -7,15 +7,9 @@ function processAuthors(item: any): void {
 	if (!item.author) return;
 	item.authors = item.author;
 	item.authorString = item.author
-		.map((a: any) =>
-			a.literal
-				? a.literal
-				: [a.family, a.given].filter(Boolean).join(', ')
-		)
+		.map((a: any) => (a.literal ? a.literal : [a.family, a.given].filter(Boolean).join(', ')))
 		.join('; ');
-	item.firstAuthor = item.author[0]
-		? item.author[0].family ?? item.author[0].literal ?? ''
-		: '';
+	item.firstAuthor = item.author[0] ? (item.author[0].family ?? item.author[0].literal ?? '') : '';
 }
 
 function processEditors(item: any): void {
@@ -42,9 +36,7 @@ function processCollections(item: any): void {
 function processTags(item: any): void {
 	if (!item.tags?.length) return;
 	item.tagNames = item.tags.map((t: any) => t.tag).join(', ');
-	item.hashTags = item.tags
-		.map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`)
-		.join(' ');
+	item.hashTags = item.tags.map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`).join(' ');
 }
 
 export function applyBasicTemplates(data: Record<string, any>): Record<string, any> {

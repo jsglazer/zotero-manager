@@ -20,10 +20,7 @@ function userBase(settings: ZoteroManagerSettings): string {
 
 // ── Key validation ────────────────────────────────────────────────────────────
 
-export async function validateWebApiKey(
-	apiKey: string,
-	userId: string
-): Promise<boolean> {
+export async function validateWebApiKey(apiKey: string, userId: string): Promise<boolean> {
 	if (!apiKey || !userId) return false;
 	try {
 		await request({
@@ -46,7 +43,7 @@ export interface WebAPIItem {
 
 export async function searchItems(
 	query: string,
-	settings: ZoteroManagerSettings
+	settings: ZoteroManagerSettings,
 ): Promise<WebAPIItem[]> {
 	if (!settings.webApiKey || !settings.webApiUserId) return [];
 	try {
@@ -67,7 +64,7 @@ export async function searchItems(
 
 export async function fetchItem(
 	itemKey: string,
-	settings: ZoteroManagerSettings
+	settings: ZoteroManagerSettings,
 ): Promise<WebAPIItem | null> {
 	if (!settings.webApiKey || !settings.webApiUserId) return null;
 	try {
@@ -85,7 +82,7 @@ export async function fetchItem(
 
 export async function fetchChildren(
 	itemKey: string,
-	settings: ZoteroManagerSettings
+	settings: ZoteroManagerSettings,
 ): Promise<WebAPIItem[]> {
 	if (!settings.webApiKey || !settings.webApiUserId) return [];
 	try {
@@ -106,16 +103,14 @@ export async function fetchChildren(
 export async function getBibliography(
 	itemKeys: string[],
 	settings: ZoteroManagerSettings,
-	cslStyle?: string
+	cslStyle?: string,
 ): Promise<string | null> {
 	if (!settings.webApiKey || !settings.webApiUserId || !itemKeys.length) return null;
 	const styleParam = cslStyle ? `&style=${encodeURIComponent(cslStyle)}` : '';
 	try {
 		const res = await request({
 			method: 'GET',
-			url:
-				`${userBase(settings)}/items?format=bib${styleParam}` +
-				`&itemKey=${itemKeys.join(',')}`,
+			url: `${userBase(settings)}/items?format=bib${styleParam}` + `&itemKey=${itemKeys.join(',')}`,
 			headers: headers(settings.webApiKey),
 		});
 		// Response is HTML bibliography — strip tags for plain markdown
@@ -134,7 +129,7 @@ let lastCheck = 0;
 
 export async function getAllItemsForSuggest(
 	settings: ZoteroManagerSettings,
-	force = false
+	force = false,
 ): Promise<CiteKeyExport[]> {
 	if (!settings.webApiKey || !settings.webApiUserId) return [];
 	if (!force && cachedKeys.length && Date.now() - lastCheck < 60_000) return cachedKeys;

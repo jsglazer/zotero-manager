@@ -31,10 +31,7 @@ function buildCAYWQuery(format: CitationFormat): string {
 
 // ── Core CAYW calls ───────────────────────────────────────────────────────────
 
-export async function getCAYWRaw(
-	db: DatabaseWithPort,
-	query: string
-): Promise<string | null> {
+export async function getCAYWRaw(db: DatabaseWithPort, query: string): Promise<string | null> {
 	if (!(await isBBTRunning(db))) return null;
 	const qid = Symbol();
 	try {
@@ -59,7 +56,7 @@ export async function getCAYWRaw(
 export async function getCAYWJSON(db: DatabaseWithPort): Promise<any[] | null> {
 	const res = await getCAYWRaw(
 		db,
-		'format=translate&translator=36a3b0b5-bad0-4a04-b79b-441c7cef77db&exportNotes=false'
+		'format=translate&translator=36a3b0b5-bad0-4a04-b79b-441c7cef77db&exportNotes=false',
 	);
 	if (!res) return null;
 	try {
@@ -73,16 +70,14 @@ export async function getCAYWJSON(db: DatabaseWithPort): Promise<any[] | null> {
 export async function getCiteKeys(db: DatabaseWithPort): Promise<CiteKey[]> {
 	const json = await getCAYWJSON(db);
 	if (!json) return [];
-	return json
-		.map((e: any) => getCiteKeyFromAny(e))
-		.filter((k): k is CiteKey => k !== null);
+	return json.map((e: any) => getCiteKeyFromAny(e)).filter((k): k is CiteKey => k !== null);
 }
 
 // ── Citation format dispatcher ────────────────────────────────────────────────
 
 export async function getCAYW(
 	format: CitationFormat,
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<string | null> {
 	if (format.format === 'formatted-bibliography') {
 		const citeKeys = await getCiteKeys(db);
@@ -102,7 +97,7 @@ let lastCheck = 0;
 
 export async function getAllCiteKeysForSuggest(
 	db: DatabaseWithPort,
-	force = false
+	force = false,
 ): Promise<CiteKeyExport[]> {
 	if (!force && cachedKeys.length && Date.now() - lastCheck < 60_000) {
 		return cachedKeys;

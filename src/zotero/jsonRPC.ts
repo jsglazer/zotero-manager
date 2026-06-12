@@ -7,7 +7,7 @@ import { ZQueue } from './queue';
 async function rpc<T = any>(
 	db: DatabaseWithPort,
 	method: string,
-	params: unknown[] = []
+	params: unknown[] = [],
 ): Promise<T> {
 	const qid = Symbol();
 	await ZQueue.wait(qid);
@@ -30,10 +30,7 @@ async function rpc<T = any>(
 
 // ── Item search ───────────────────────────────────────────────────────────────
 
-export async function execSearch(
-	term: string,
-	db: DatabaseWithPort
-): Promise<any[] | null> {
+export async function execSearch(term: string, db: DatabaseWithPort): Promise<any[] | null> {
 	try {
 		return await rpc(db, 'item.search', [term]);
 	} catch (e) {
@@ -47,7 +44,7 @@ export async function execSearch(
 
 export async function getNotesFromCiteKeys(
 	citeKeys: CiteKey[],
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<Record<string, string[]> | null> {
 	try {
 		return await rpc(db, 'item.notes', [citeKeys.map((k) => k.key)]);
@@ -62,7 +59,7 @@ export async function getNotesFromCiteKeys(
 
 export async function getCollectionFromCiteKey(
 	citeKey: CiteKey,
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<any[] | null> {
 	try {
 		const result = await rpc(db, 'item.collections', [[citeKey.key], true]);
@@ -87,7 +84,7 @@ export async function getCollectionFromCiteKey(
 
 export async function getAttachmentsFromCiteKey(
 	citeKey: CiteKey,
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<any[] | null> {
 	try {
 		return await rpc(db, 'item.attachments', [citeKey.key, citeKey.library]);
@@ -104,7 +101,7 @@ export async function getBibFromCiteKeys(
 	db: DatabaseWithPort,
 	cslStyle?: string,
 	format?: string,
-	silent = false
+	silent = false,
 ): Promise<string | null> {
 	if (!citeKeys.length) return null;
 	try {
@@ -132,7 +129,7 @@ export function getBibFromCiteKey(
 	db: DatabaseWithPort,
 	cslStyle?: string,
 	format?: string,
-	silent = false
+	silent = false,
 ) {
 	return getBibFromCiteKeys([citeKey], db, cslStyle, format, silent);
 }
@@ -145,7 +142,7 @@ const DATE_TRANSLATOR = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
 export async function getItemJSONFromCiteKeys(
 	citeKeys: CiteKey[],
 	db: DatabaseWithPort,
-	libraryID: number
+	libraryID: number,
 ): Promise<any[] | null> {
 	try {
 		const result = await rpc(db, 'item.export', [
@@ -153,9 +150,7 @@ export async function getItemJSONFromCiteKeys(
 			CSL_TRANSLATOR,
 			libraryID,
 		]);
-		return Array.isArray(result)
-			? JSON.parse(result[2]).items
-			: JSON.parse(result).items;
+		return Array.isArray(result) ? JSON.parse(result[2]).items : JSON.parse(result).items;
 	} catch (e) {
 		console.error(e);
 		new Notice(`Error retrieving item data: ${(e as Error).message}`, 10000);
@@ -165,26 +160,17 @@ export async function getItemJSONFromCiteKeys(
 
 export async function getIssueDateFromCiteKey(
 	citeKey: CiteKey,
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<moment.Moment | null> {
 	try {
-		const result = await rpc(db, 'item.export', [
-			[citeKey.key],
-			DATE_TRANSLATOR,
-			citeKey.library,
-		]);
-		const items: any[] = Array.isArray(result)
-			? JSON.parse(result[2])
-			: JSON.parse(result);
+		const result = await rpc(db, 'item.export', [[citeKey.key], DATE_TRANSLATOR, citeKey.library]);
+		const items: any[] = Array.isArray(result) ? JSON.parse(result[2]) : JSON.parse(result);
 
 		for (const item of items) {
 			const { issued } = item;
 			if (!issued?.['date-parts']?.[0]?.length) continue;
 			const [y, m, d] = issued['date-parts'][0];
-			return moment(
-				`${y}-${m ? padNumber(m) : '01'}-${d ? padNumber(d) : '01'}`,
-				'YYYY-MM-DD'
-			);
+			return moment(`${y}-${m ? padNumber(m) : '01'}-${d ? padNumber(d) : '01'}`, 'YYYY-MM-DD');
 		}
 		return null;
 	} catch (e) {
@@ -207,7 +193,7 @@ export async function getUserGroups(db: DatabaseWithPort): Promise<any[] | null>
 export async function getCiteKeyExport(
 	db: DatabaseWithPort,
 	groupId: string,
-	groupName: string
+	groupName: string,
 ): Promise<CiteKeyExport[] | null> {
 	const qid = Symbol();
 	try {
@@ -241,7 +227,7 @@ let lastAllKeysCheck = 0;
 
 export async function getAllCiteKeys(
 	db: DatabaseWithPort,
-	force = false
+	force = false,
 ): Promise<{ citekeys: CiteKeyExport[]; fromCache: boolean }> {
 	if (!force && cachedAllKeys.length && Date.now() - lastAllKeysCheck < 60_000) {
 		return { citekeys: cachedAllKeys, fromCache: true };
@@ -264,7 +250,7 @@ export async function getAllCiteKeys(
 export async function getItemJSONFromRelations(
 	libraryID: number,
 	relations: string[],
-	db: DatabaseWithPort
+	db: DatabaseWithPort,
 ): Promise<any[]> {
 	const uriMap: Record<string, string> = {};
 	const idOrder: string[] = [];
@@ -296,7 +282,7 @@ export async function getItemJSONFromRelations(
 	}
 
 	const items: any[] = citekeys.length
-		? (await getItemJSONFromCiteKeys(citekeys, db, libraryID)) ?? []
+		? ((await getItemJSONFromCiteKeys(citekeys, db, libraryID)) ?? [])
 		: [];
 
 	return idOrder.map((id) => {

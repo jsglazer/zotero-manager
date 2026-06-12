@@ -16,7 +16,7 @@ export class PersistExtension {
 
 	static prepareTemplateData(
 		data: Record<string, any>,
-		existingContent: string
+		existingContent: string,
 	): Record<string, any> {
 		if (!existingContent) return data;
 
@@ -71,19 +71,15 @@ env.addFilter('lower', (s: string) => (s ?? '').toLowerCase());
 env.addFilter('upper', (s: string) => (s ?? '').toUpperCase());
 
 // replace
-env.addFilter('replace', (s: string, from: string, to: string) =>
-	(s ?? '').split(from).join(to)
-);
+env.addFilter('replace', (s: string, from: string, to: string) => (s ?? '').split(from).join(to));
 
 // truncate
-env.addFilter('truncate', (s: string, n: number) =>
-	s && s.length > n ? s.slice(0, n) + '…' : s
-);
+env.addFilter('truncate', (s: string, n: number) => (s && s.length > n ? s.slice(0, n) + '…' : s));
 
 export async function renderTemplate(
 	_templatePath: string,
 	templateStr: string,
-	data: Record<string, any>
+	data: Record<string, any>,
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		env.renderString(templateStr, data, (err, result) => {

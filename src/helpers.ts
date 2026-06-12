@@ -19,6 +19,8 @@ export function focusObsidian(): void {
 			win?.focus();
 			return;
 		}
-	} catch { /* not in Electron or remote disabled */ }
+	} catch {
+		/* not in Electron or remote disabled */
+	}
 	window.focus();
 }

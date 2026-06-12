@@ -7,7 +7,8 @@ import type ZoteroManager from './main';
 const PANDOC_RE = /@([\w][\w:./-]*)/g;
 
 // \cite{key}, \autocite{key,key2}, \parencite{key}, etc.
-const LATEX_RE = /\\(?:cite|autocite|parencite|textcite|footcite|nocite|citep|citet|Cite|Autocite)\*?\{([^}]+)\}/g;
+const LATEX_RE =
+	/\\(?:cite|autocite|parencite|textcite|footcite|nocite|citep|citet|Cite|Autocite)\*?\{([^}]+)\}/g;
 
 export function extractCiteKeys(content: string): string[] {
 	const keys = new Set<string>();
@@ -53,8 +54,8 @@ export class DataviewIntegration {
 					if (type === 'update' && file instanceof TFile) {
 						this.injectForFile(file);
 					}
-				}
-			)
+				},
+			),
 		);
 
 		// Initial pass over all existing notes
@@ -92,16 +93,16 @@ export class DataviewIntegration {
 	injectForImportedNote(
 		filePath: string,
 		citekey: string,
-		item?: { title?: string; authorString?: string; year?: string }
+		item?: { title?: string; authorString?: string; year?: string },
 	) {
 		const attempt = (remaining: number) => {
 			const pages = this.dvPages();
 			const page = pages?.get(filePath);
 			if (page) {
 				page.fields.set('citekeys', [citekey]);
-				if (item?.title)        page.fields.set('title',   item.title);
+				if (item?.title) page.fields.set('title', item.title);
 				if (item?.authorString) page.fields.set('authors', item.authorString);
-				if (item?.year)         page.fields.set('year',    item.year);
+				if (item?.year) page.fields.set('year', item.year);
 			} else if (remaining > 0) {
 				setTimeout(() => attempt(remaining - 1), 500);
 			}

@@ -23,10 +23,7 @@ export function getBBTBase(db: DatabaseWithPort): string {
 let cachedBBTRunning = false;
 let lastBBTCheck = 0;
 
-export async function isBBTRunning(
-	db: DatabaseWithPort,
-	silent = false
-): Promise<boolean> {
+export async function isBBTRunning(db: DatabaseWithPort, silent = false): Promise<boolean> {
 	if (cachedBBTRunning && Date.now() - lastBBTCheck < 30_000) {
 		return cachedBBTRunning;
 	}
@@ -46,7 +43,7 @@ export async function isBBTRunning(
 		if (!silent) {
 			new Notice(
 				'Cannot connect to Zotero. Please ensure it is running and the Better BibTeX plugin is installed.',
-				10000
+				10000,
 			);
 		}
 		return false;
@@ -57,7 +54,7 @@ export async function isBBTRunning(
 
 export async function detectMode(
 	db: DatabaseWithPort,
-	webApiKey?: string
+	webApiKey?: string,
 ): Promise<ConnectionMode> {
 	if (await isBBTRunning(db, true)) return 'bbt';
 	if (webApiKey) return 'webapi';
@@ -68,6 +65,6 @@ export function warnNoConnection() {
 	new Notice(
 		'Zotero Manager: Cannot connect to Zotero.\n' +
 			'Either start Zotero with Better BibTeX, or configure a Zotero Web API key in settings.',
-		10000
+		10000,
 	);
 }

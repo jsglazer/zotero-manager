@@ -50,8 +50,15 @@ export default class ZoteroManager extends Plugin {
 			editorCallback: async (editor) => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
-				if (mode === 'none') { warnNoConnection(); return; }
-				const notes = await noteExportPrompt(db, this.app.workspace.getActiveFile()?.parent?.path, this.settings.colorLabels);
+				if (mode === 'none') {
+					warnNoConnection();
+					return;
+				}
+				const notes = await noteExportPrompt(
+					db,
+					this.app.workspace.getActiveFile()?.parent?.path,
+					this.settings.colorLabels,
+				);
 				if (notes) insertNotesIntoCurrentDoc(editor, notes);
 			},
 		});
@@ -62,8 +69,15 @@ export default class ZoteroManager extends Plugin {
 			callback: async () => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
-				if (mode === 'none') { warnNoConnection(); return; }
-				const notes = await noteExportPrompt(db, this.settings.noteImportFolder, this.settings.colorLabels);
+				if (mode === 'none') {
+					warnNoConnection();
+					return;
+				}
+				const notes = await noteExportPrompt(
+					db,
+					this.settings.noteImportFolder,
+					this.settings.colorLabels,
+				);
 				if (notes) {
 					const imported = await filesFromNotes(this.app, this.settings.noteImportFolder, notes);
 					for (const { path, citekey } of imported) {
@@ -102,7 +116,10 @@ export default class ZoteroManager extends Plugin {
 			editorCallback: async (editor) => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
-				if (mode === 'none') { warnNoConnection(); return; }
+				if (mode === 'none') {
+					warnNoConnection();
+					return;
+				}
 
 				// Re-read format from current settings so name/template changes are picked up
 				const current = this.settings.citeFormats.find((f) => f.name === format.name) ?? format;
@@ -113,9 +130,9 @@ export default class ZoteroManager extends Plugin {
 					result = await getCAYW(current, db);
 				}
 				if (typeof result === 'string') {
-				editor.replaceSelection(result);
-				await this.dataview.injectForActiveFile();
-			}
+					editor.replaceSelection(result);
+					await this.dataview.injectForActiveFile();
+				}
 			},
 		});
 		this.registeredCiteCommandIds.add(id);
@@ -130,7 +147,10 @@ export default class ZoteroManager extends Plugin {
 			callback: async () => {
 				const db = { database: this.settings.database, port: this.settings.port };
 				const mode = await detectMode(db, this.settings.webApiKey);
-				if (mode === 'none') { warnNoConnection(); return; }
+				if (mode === 'none') {
+					warnNoConnection();
+					return;
+				}
 
 				const current = this.settings.exportFormats.find((f) => f.name === format.name) ?? format;
 				const paths = await exportToMarkdown(this.app, {
@@ -150,8 +170,12 @@ export default class ZoteroManager extends Plugin {
 
 	// Called from settings whenever formats change — removes stale commands and adds new ones.
 	reconcileCommands() {
-		const currentCiteIds = new Set(this.settings.citeFormats.map((f) => `${CITE_CMD_PREFIX}${f.name}`));
-		const currentExportIds = new Set(this.settings.exportFormats.map((f) => `${EXPORT_CMD_PREFIX}${f.name}`));
+		const currentCiteIds = new Set(
+			this.settings.citeFormats.map((f) => `${CITE_CMD_PREFIX}${f.name}`),
+		);
+		const currentExportIds = new Set(
+			this.settings.exportFormats.map((f) => `${EXPORT_CMD_PREFIX}${f.name}`),
+		);
 
 		// Remove stale cite commands
 		for (const id of this.registeredCiteCommandIds) {
@@ -180,9 +204,15 @@ export default class ZoteroManager extends Plugin {
 
 		let toOpen: string[] = [];
 		switch (this.settings.whichNotesToOpenAfterImport) {
-			case 'first-imported-note': toOpen = [paths[0]]; break;
-			case 'last-imported-note': toOpen = [paths[paths.length - 1]]; break;
-			case 'all-imported-notes': toOpen = paths; break;
+			case 'first-imported-note':
+				toOpen = [paths[0]];
+				break;
+			case 'last-imported-note':
+				toOpen = [paths[paths.length - 1]];
+				break;
+			case 'all-imported-notes':
+				toOpen = paths;
+				break;
 		}
 
 		await new Promise((r) => setTimeout(r, 500));

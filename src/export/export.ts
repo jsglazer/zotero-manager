@@ -35,12 +35,10 @@ async function processNote(
 	note: any,
 	importDate: moment.Moment,
 	db: import('../types').DatabaseWithPort,
-	cslStyle?: string
+	cslStyle?: string,
 ) {
 	if (note.note) {
-		note.note = htmlToMarkdown(
-			await processZoteroAnnotationNotes(citeKey.key, note.note, {})
-		);
+		note.note = htmlToMarkdown(await processZoteroAnnotationNotes(citeKey.key, note.note, {}));
 	}
 	if (note.dateAdded) note.dateAdded = moment(note.dateAdded);
 	if (note.dateModified) note.dateModified = moment(note.dateModified);
@@ -64,7 +62,7 @@ async function processItem(
 	importDate: moment.Moment,
 	db: import('../types').DatabaseWithPort,
 	cslStyle?: string,
-	skipRelations = false
+	skipRelations = false,
 ) {
 	const citekey = getCiteKeyFromAny(item);
 	item.importDate = importDate;
@@ -78,8 +76,16 @@ async function processItem(
 	if (citekey) {
 		if (!item.citekey) item.citekey = citekey.key;
 		if (!item.citationKey) item.citationKey = citekey.key;
-		try { item.date = await getIssueDateFromCiteKey(citekey, db); } catch { /* ok */ }
-		try { item.collections = await getCollectionFromCiteKey(citekey, db); } catch { /* ok */ }
+		try {
+			item.date = await getIssueDateFromCiteKey(citekey, db);
+		} catch {
+			/* ok */
+		}
+		try {
+			item.collections = await getCollectionFromCiteKey(citekey, db);
+		} catch {
+			/* ok */
+		}
 		try {
 			item.bibliography = await getBibFromCiteKey(citekey, db, cslStyle);
 		} catch {
@@ -107,7 +113,7 @@ async function getRelations(
 	libraryID: number,
 	importDate: moment.Moment,
 	db: import('../types').DatabaseWithPort,
-	cslStyle?: string
+	cslStyle?: string,
 ): Promise<any[]> {
 	if (item.relations && !Array.isArray(item.relations)) {
 		const flat: string[] = [];
@@ -130,7 +136,7 @@ async function getRelations(
 export async function exportToMarkdown(
 	app: App,
 	params: ExportToMarkdownParams,
-	explicitCiteKeys?: CiteKey[]
+	explicitCiteKeys?: CiteKey[],
 ): Promise<string[]> {
 	const { database, exportFormat, settings } = params;
 	const importDate = moment();
@@ -156,13 +162,26 @@ export async function exportToMarkdown(
 	const sourcePath = exportFormat.templatePath ?? '';
 	const createdPaths: string[] = [];
 
-	const toRender: Map<string, { item: any; existingFile: TFile | null; existingContent: string; lastImportDate: moment.Moment; existingAnnotations: string }> = new Map();
+	const toRender: Map<
+		string,
+		{
+			item: any;
+			existingFile: TFile | null;
+			existingContent: string;
+			lastImportDate: moment.Moment;
+			existingAnnotations: string;
+		}
+	> = new Map();
 
 	for (const item of itemData) {
 		const attachments: any[] = item.attachments ?? [];
 
 		const getMarkdownPath = async (mergedData: any): Promise<string> => {
-			const rendered = await renderTemplate(sourcePath, exportFormat.outputPathTemplate, mergedData);
+			const rendered = await renderTemplate(
+				sourcePath,
+				exportFormat.outputPathTemplate,
+				mergedData,
+			);
 			return normalizePath(sanitizeFilePath(removeStartingSlash(rendered)));
 		};
 
@@ -185,27 +204,36 @@ export async function exportToMarkdown(
 
 		for (const attachment of attachments) {
 			const imageRelativePath = exportFormat.imageOutputPathTemplate
-				? normalizePath(sanitizeFilePath(removeStartingSlash(
-					await renderTemplate(sourcePath, exportFormat.imageOutputPathTemplate,
-						applyBasicTemplates({ annotations: [], ...attachment, ...item }))
-				  )))
+				? normalizePath(
+						sanitizeFilePath(
+							removeStartingSlash(
+								await renderTemplate(
+									sourcePath,
+									exportFormat.imageOutputPathTemplate,
+									applyBasicTemplates({ annotations: [], ...attachment, ...item }),
+								),
+							),
+						),
+					)
 				: '';
 
 			const imageOutputPath = path.resolve(vaultRoot, imageRelativePath);
 
 			const imageBaseName = exportFormat.imageBaseNameTemplate
-				? sanitizeFilePath(removeStartingSlash(
-					await renderTemplate(sourcePath, exportFormat.imageBaseNameTemplate,
-						applyBasicTemplates({ annotations: [], ...attachment, ...item }))
-				  ))
+				? sanitizeFilePath(
+						removeStartingSlash(
+							await renderTemplate(
+								sourcePath,
+								exportFormat.imageBaseNameTemplate,
+								applyBasicTemplates({ annotations: [], ...attachment, ...item }),
+							),
+						),
+					)
 				: 'image';
 
 			// Collect native annotations from BBT attachment data
 			const attachmentAnnots: any[] = [];
-			const fullAttachments = await getAttachmentsFromCiteKey(
-				getCiteKeyFromAny(item)!,
-				database
-			);
+			const fullAttachments = await getAttachmentsFromCiteKey(getCiteKeyFromAny(item)!, database);
 
 			const attachmentMap = (fullAttachments ?? []).reduce<Record<string, any>>((m, a) => {
 				if (a?.path) m[a.path] = a;
@@ -216,14 +244,23 @@ export async function exportToMarkdown(
 			if (attachmentData?.annotations) {
 				for (const annot of attachmentData.annotations) {
 					attachmentAnnots.push(
-						convertNativeAnnotation(annot, attachment, imageOutputPath, imageRelativePath, imageBaseName, true, settings.colorLabels)
+						convertNativeAnnotation(
+							annot,
+							attachment,
+							imageOutputPath,
+							imageRelativePath,
+							imageBaseName,
+							true,
+							settings.colorLabels,
+						),
 					);
 				}
 			}
 
-			const annots = settings.shouldConcat && attachmentAnnots.length
-				? concatAnnotations(attachmentAnnots)
-				: attachmentAnnots;
+			const annots =
+				settings.shouldConcat && attachmentAnnots.length
+					? concatAnnotations(attachmentAnnots)
+					: attachmentAnnots;
 
 			if (annots.length) attachment.annotations = annots;
 
@@ -255,7 +292,7 @@ export async function exportToMarkdown(
 
 			const templateData = PersistExtension.prepareTemplateData(
 				applyBasicTemplates(item),
-				existingContent
+				existingContent,
 			);
 
 			let rendered = await renderTemplate(sourcePath, template, templateData);
@@ -283,7 +320,7 @@ export async function exportToMarkdown(
 
 export async function renderCiteTemplate(
 	app: App,
-	params: import('../types').RenderCiteTemplateParams
+	params: import('../types').RenderCiteTemplateParams,
 ): Promise<string | null> {
 	const { database, format } = params;
 	const importDate = moment();
@@ -312,7 +349,7 @@ export async function renderCiteTemplate(
 
 export async function dataExplorerPrompt(
 	app: App,
-	settings: ZoteroManagerSettings
+	settings: ZoteroManagerSettings,
 ): Promise<any[] | null> {
 	const database = { database: settings.database, port: settings.port };
 	const importDate = moment();
@@ -336,7 +373,7 @@ export async function dataExplorerPrompt(
 			const attachmentData = attachmentMap[attachment.path];
 			if (attachmentData?.annotations) {
 				attachment.annotations = attachmentData.annotations.map((annot: any) =>
-					convertNativeAnnotation(annot, attachment, '/output_path', 'output_path', 'base_name')
+					convertNativeAnnotation(annot, attachment, '/output_path', 'output_path', 'base_name'),
 				);
 			}
 		}

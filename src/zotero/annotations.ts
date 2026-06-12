@@ -3,7 +3,9 @@ import { moment, normalizePath } from 'obsidian';
 import path from 'path';
 
 function hexToHSL(str: string): { h: number; s: number; l: number } {
-	let rStr = '0', gStr = '0', bStr = '0';
+	let rStr = '0',
+		gStr = '0',
+		bStr = '0';
 	if (str.length === 4) {
 		rStr = '0x' + str[1] + str[1];
 		gStr = '0x' + str[2] + str[2];
@@ -13,9 +15,15 @@ function hexToHSL(str: string): { h: number; s: number; l: number } {
 		gStr = '0x' + str[3] + str[4];
 		bStr = '0x' + str[5] + str[6];
 	}
-	const r = +rStr / 255, g = +gStr / 255, b = +bStr / 255;
-	const cmin = Math.min(r, g, b), cmax = Math.max(r, g, b), delta = cmax - cmin;
-	let h = 0, s = 0, l = 0;
+	const r = +rStr / 255,
+		g = +gStr / 255,
+		b = +bStr / 255;
+	const cmin = Math.min(r, g, b),
+		cmax = Math.max(r, g, b),
+		delta = cmax - cmin;
+	let h = 0,
+		s = 0,
+		l = 0;
 	if (delta !== 0) {
 		if (cmax === r) h = ((g - b) / delta) % 6;
 		else if (cmax === g) h = (b - r) / delta + 2;
@@ -47,7 +55,7 @@ export function getColorCategory(hex: string): string {
 export function getLocalURI(
 	ext: 'select' | 'open-pdf',
 	uri: string,
-	params?: Record<string, string>
+	params?: Record<string, string>,
 ): string {
 	const itemId = uri.split('/').pop();
 	const prefix = `zotero://${ext}`;
@@ -65,7 +73,7 @@ export function convertNativeAnnotation(
 	imageRelativePath: string,
 	imageBaseName: string,
 	copy = false,
-	colorLabels?: Record<string, string>
+	colorLabels?: Record<string, string>,
 ): Record<string, any> {
 	const colorCategory = getColorCategory(annotation.annotationColor ?? '#000000');
 	const annot: Record<string, any> = {
@@ -142,9 +150,7 @@ export function concatAnnotations(annots: Array<Record<string, any>>): Array<Rec
 				last.annotatedText = last.annotatedText
 					? last.annotatedText + '...' + a.annotatedText
 					: a.annotatedText;
-				last.comment = last.comment
-					? last.comment + '...' + a.comment
-					: a.comment;
+				last.comment = last.comment ? last.comment + '...' + a.comment : a.comment;
 				continue;
 			}
 		}

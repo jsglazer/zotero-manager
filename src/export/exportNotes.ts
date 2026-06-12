@@ -1,5 +1,16 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { App, Editor, Modal, Notice, Setting, TFile, TFolder, htmlToMarkdown, moment, normalizePath } from 'obsidian';
+import {
+	App,
+	Editor,
+	Modal,
+	Notice,
+	Setting,
+	TFile,
+	TFolder,
+	htmlToMarkdown,
+	moment,
+	normalizePath,
+} from 'obsidian';
 import path from 'path';
 import { CiteKey, DatabaseWithPort } from '../types';
 import { getVaultRoot } from '../helpers';
@@ -14,7 +25,7 @@ export async function processZoteroAnnotationNotes(
 	key: string,
 	noteStr: string,
 	attachments: Record<string, string>,
-	destination?: string
+	destination?: string,
 ): Promise<string> {
 	const parsed = new DOMParser().parseFromString(noteStr, 'text/html');
 	const annots = parsed.querySelectorAll('[data-annotation]');
@@ -33,7 +44,7 @@ export async function processZoteroAnnotationNotes(
 					const destPath = await getAvailablePathForAttachments(
 						json.annotationKey,
 						path.extname(imagePath).slice(1),
-						destination
+						destination,
 					);
 					const output = path.parse(path.join(getVaultRoot(app), destPath));
 					if (!existsSync(output.dir)) mkdirSync(output.dir, { recursive: true });
@@ -97,7 +108,7 @@ export async function processZoteroAnnotationNotes(
 async function getAvailablePathForAttachments(
 	base: string,
 	extension: string,
-	destination?: string
+	destination?: string,
 ): Promise<string> {
 	let folderPath: string = (app.vault as any).getConfig('attachmentFolderPath') ?? '';
 	const sameFolder = folderPath === '.' || folderPath === './';
@@ -123,7 +134,11 @@ async function getAvailablePathForAttachments(
 
 // ── Native annotation formatter ───────────────────────────────────────────────
 
-function formatNativeAnnotation(annot: any, attachment: any, colorLabels?: Record<string, string>): string {
+function formatNativeAnnotation(
+	annot: any,
+	attachment: any,
+	colorLabels?: Record<string, string>,
+): string {
 	const colorCategory = getColorCategory(annot.annotationColor ?? '#ffff00');
 	const color = colorLabels?.[colorCategory] ?? colorCategory;
 	const page = annot.annotationPageLabel ?? '';
@@ -174,12 +189,12 @@ function formatNativeAnnotation(annot: any, attachment: any, colorLabels?: Recor
 export async function noteExportPrompt(
 	db: DatabaseWithPort,
 	destination?: string,
-	colorLabels?: Record<string, string>
+	colorLabels?: Record<string, string>,
 ): Promise<Record<string, string> | undefined> {
 	const citeKeys = await getCiteKeys(db);
 	if (!citeKeys.length) return;
 
-	const notes = await getNotesFromCiteKeys(citeKeys, db) ?? {};
+	const notes = (await getNotesFromCiteKeys(citeKeys, db)) ?? {};
 	const keys = Object.keys(notes);
 
 	// Collect attachments for each cite key (images for note processing + native annotations)
@@ -215,8 +230,8 @@ export async function noteExportPrompt(
 		for (const note of notes[key]) {
 			parts.push(
 				htmlToMarkdown(
-					await processZoteroAnnotationNotes(key, note, imageMap[key] ?? {}, destination)
-				)
+					await processZoteroAnnotationNotes(key, note, imageMap[key] ?? {}, destination),
+				),
 			);
 		}
 
@@ -245,17 +260,14 @@ export async function noteExportPrompt(
 
 // ── Insert / import ───────────────────────────────────────────────────────────
 
-export function insertNotesIntoCurrentDoc(
-	editor: Editor,
-	notes: Record<string, string>
-): void {
+export function insertNotesIntoCurrentDoc(editor: Editor, notes: Record<string, string>): void {
 	editor.replaceSelection(Object.values(notes).join('\n\n'));
 }
 
 export async function filesFromNotes(
 	app: App,
 	folder: string,
-	notes: Record<string, string>
+	notes: Record<string, string>,
 ): Promise<Array<{ path: string; citekey: string }>> {
 	const results: Array<{ path: string; citekey: string }> = [];
 	for (const [citekey, content] of Object.entries(notes)) {
@@ -280,16 +292,19 @@ class ConfirmOverwriteModal extends Modal {
 		this.contentEl.createEl('p', { text: this.message });
 		new Setting(this.contentEl)
 			.addButton((btn) =>
-				btn.setButtonText('Overwrite').setCta().onClick(() => {
-					this.resolve(true);
-					this.close();
-				})
+				btn
+					.setButtonText('Overwrite')
+					.setCta()
+					.onClick(() => {
+						this.resolve(true);
+						this.close();
+					}),
 			)
 			.addButton((btn) =>
 				btn.setButtonText('Cancel').onClick(() => {
 					this.resolve(false);
 					this.close();
-				})
+				}),
 			);
 	}
 
@@ -306,11 +321,9 @@ async function newNoteFile(
 	app: App,
 	folder: string,
 	citeKey: string,
-	content: string
+	content: string,
 ): Promise<TFile | null> {
-	const filePath = normalizePath(
-		sanitizeFilePath(removeStartingSlash(`${folder}/${citeKey}.md`))
-	);
+	const filePath = normalizePath(sanitizeFilePath(removeStartingSlash(`${folder}/${citeKey}.md`)));
 	let file = app.vault.getAbstractFileByPath(filePath) as TFile | null;
 	try {
 		if (file) {

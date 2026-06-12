@@ -64,7 +64,12 @@ export function debounce<T extends (...args: any[]) => any>(fn: T): T {
 }
 export function setIcon(): void {}
 export function normalizePath(path: string): string {
-	return path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+|\/+$/g, '') || '/';
+	return (
+		path
+			.replace(/\\/g, '/')
+			.replace(/\/+/g, '/')
+			.replace(/^\/+|\/+$/g, '') || '/'
+	);
 }
 export function addIcon(): void {}
 export function setTooltip(): void {}
