@@ -1,5 +1,9 @@
 # Zotero Manager for Obsidian
 
+[![CI](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jsglazer/zotero-manager/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jsglazer/zotero-manager)
+
 An Obsidian plugin for querying and importing bibliographic information, PDF annotations, notes, and citations from [Zotero](https://www.zotero.org/). Built as a modernized replacement for [obsidian-zotero-integration](https://github.com/mgmeyers/obsidian-zotero-integration), with full feature parity, native Zotero 6 annotation support, and a Zotero Web API fallback mode.
 
 ---
