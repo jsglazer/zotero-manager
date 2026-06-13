@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      # Pinned to the plugin's minAppVersion; bumping it breaks `npm ci`
+      # (peer conflict), so don't auto-PR it.
+      - dependency-name: obsidian
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
