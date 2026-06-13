@@ -24,7 +24,7 @@
 		"@types/nunjucks": "^3.2.6",
 		"@vitest/coverage-v8": "^4.1.8",
 		"builtin-modules": "^3.3.0",
-		"esbuild": "^0.21.5",
+		"esbuild": "0.28.1",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-obsidianmd": "^0.3.0",
