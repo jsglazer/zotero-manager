@@ -36,7 +36,7 @@
 		"vitest": "^4.1.8"
 	},
 	"dependencies": {
-		"fuse.js": "^7.0.0",
+		"fuse.js": "^7.4.2",
 		"nunjucks": "^3.2.4",
 		"preact": "^10.22.0"
 	}
