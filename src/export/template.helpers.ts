@@ -1,5 +1,6 @@
-import { App, TFile, moment, normalizePath } from 'obsidian';
+import { App, TFile, normalizePath } from 'obsidian';
 import path from 'path';
+import { moment, type Moment } from '../moment';
 import { ExportToMarkdownParams } from '../types';
 
 // ── Export-date tracking ──────────────────────────────────────────────────────
@@ -10,7 +11,7 @@ export function appendExportDate(content: string): string {
 	return `${content}\n${EXPORT_DATE_MARKER}${moment().toISOString()}`;
 }
 
-export function getLastExport(content: string): moment.Moment {
+export function getLastExport(content: string): Moment {
 	const match = content.match(new RegExp(`${EXPORT_DATE_MARKER}(.+)`));
 	return match ? moment(match[1].trim()) : moment(0);
 }

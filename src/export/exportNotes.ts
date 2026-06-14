@@ -8,7 +8,6 @@ import {
 	TFile,
 	TFolder,
 	htmlToMarkdown,
-	moment,
 	normalizePath,
 } from 'obsidian';
 import path from 'path';
@@ -57,7 +56,7 @@ export async function processZoteroAnnotationNotes(
 					} catch (e) {
 						new Notice('Error: unable to copy annotation image from Zotero into your vault', 7000);
 					}
-					(annot as HTMLImageElement).src = destPath;
+					annot.src = destPath;
 				}
 			}
 
@@ -211,8 +210,8 @@ export async function noteExportPrompt(
 		for (const a of atts) {
 			if (!a.annotations?.length) continue;
 			for (const annot of a.annotations) {
-				if (annot.annotationType === 'image') {
-					images[annot.key] = annot.annotationImagePath;
+				if (annot.annotationType === 'image' && annot.key) {
+					images[annot.key] = annot.annotationImagePath ?? '';
 				}
 				annotLines.push(formatNativeAnnotation(annot, a, colorLabels));
 			}

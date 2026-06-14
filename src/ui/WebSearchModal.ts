@@ -16,7 +16,7 @@ export class WebSearchModal extends FuzzySuggestModal<WebAPIItem> {
 	}
 
 	async onOpen() {
-		super.onOpen();
+		void super.onOpen();
 		// Pre-load a default result set
 		this.items = await searchItems('', this.settings);
 		(this as any).updateSuggestions?.();

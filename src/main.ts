@@ -222,7 +222,7 @@ export default class ZoteroManager extends Plugin {
 			const file = this.app.vault.getAbstractFileByPath(p);
 			const existing = leaves.find((l) => (l.view as EditableFileView).file?.path === p);
 			if (existing) {
-				this.app.workspace.revealLeaf(existing);
+				void this.app.workspace.revealLeaf(existing);
 			} else if (file instanceof TFile) {
 				await this.app.workspace.getLeaf(true).openFile(file);
 			}
@@ -236,7 +236,7 @@ export default class ZoteroManager extends Plugin {
 		const leaf = this.app.workspace.getRightLeaf(false);
 		if (leaf) {
 			await leaf.setViewState({ type: DATA_EXPLORER_VIEW });
-			this.app.workspace.revealLeaf(leaf);
+			void this.app.workspace.revealLeaf(leaf);
 		}
 	}
 

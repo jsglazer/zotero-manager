@@ -66,17 +66,21 @@ export class CiteSuggest extends EditorSuggest<CiteKeyExport> {
 		el.createEl('div', { text: item.title, cls: 'zotero-manager-search-result-meta' });
 	}
 
-	async selectSuggestion(item: CiteKeyExport, _evt: MouseEvent | KeyboardEvent) {
+	selectSuggestion(item: CiteKeyExport, _evt: MouseEvent | KeyboardEvent): void {
 		const ctx = this.context;
 		if (!ctx) return;
 
-		let insertion = this.settings.citeSuggestTemplate ?? '[[{{citekey}}]]';
-		try {
-			insertion = await renderTemplate('', insertion, item as any);
-		} catch {
-			insertion = `[[${item.citekey}]]`;
-		}
+		// EditorSuggest.selectSuggestion is void-returning; run the async render
+		// fire-and-forget (the base ignores any returned promise anyway).
+		void (async () => {
+			let insertion = this.settings.citeSuggestTemplate ?? '[[{{citekey}}]]';
+			try {
+				insertion = await renderTemplate('', insertion, item);
+			} catch {
+				insertion = `[[${item.citekey}]]`;
+			}
 
-		ctx.editor.replaceRange(insertion, ctx.start, ctx.end);
+			ctx.editor.replaceRange(insertion, ctx.start, ctx.end);
+		})();
 	}
 }

@@ -68,7 +68,7 @@ function DataExplorerApp({ plugin }: { plugin: ZoteroManager }) {
 
 	return (
 		<div class="zotero-manager-data-explorer">
-			<button onClick={load} disabled={loading}>
+			<button onClick={() => void load()} disabled={loading}>
 				{loading ? 'Loading…' : 'Select item from Zotero'}
 			</button>
 			{error && <p style={{ color: 'var(--color-red)' }}>{error}</p>}

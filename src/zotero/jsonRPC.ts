@@ -1,10 +1,12 @@
-import { Notice, htmlToMarkdown, moment, request } from 'obsidian';
+import { Notice, htmlToMarkdown, request } from 'obsidian';
+import { moment, type Moment } from '../moment';
 import { CiteKey, CiteKeyExport, DatabaseWithPort } from '../types';
+import type { ZoteroAttachment, ZoteroCollection, ZoteroItem } from './data';
 import { padNumber } from '../helpers';
 import { DEFAULT_HEADERS, getBBTBase } from './connection';
 import { ZQueue } from './queue';
 
-async function rpc<T = any>(
+async function rpc<T = unknown>(
 	db: DatabaseWithPort,
 	method: string,
 	params: unknown[] = [],
@@ -19,7 +21,7 @@ async function rpc<T = any>(
 			headers: DEFAULT_HEADERS,
 		});
 		ZQueue.end(qid);
-		const parsed = JSON.parse(res);
+		const parsed = JSON.parse(res) as { error?: { message?: string }; result: T };
 		if (parsed.error?.message) throw new Error(parsed.error.message);
 		return parsed.result;
 	} catch (e) {
@@ -30,9 +32,9 @@ async function rpc<T = any>(
 
 // ── Item search ───────────────────────────────────────────────────────────────
 
-export async function execSearch(term: string, db: DatabaseWithPort): Promise<any[] | null> {
+export async function execSearch(term: string, db: DatabaseWithPort): Promise<ZoteroItem[] | null> {
 	try {
-		return await rpc(db, 'item.search', [term]);
+		return await rpc<ZoteroItem[]>(db, 'item.search', [term]);
 	} catch (e) {
 		console.error(e);
 		new Notice(`Zotero search error: ${(e as Error).message}`, 10000);
@@ -47,7 +49,7 @@ export async function getNotesFromCiteKeys(
 	db: DatabaseWithPort,
 ): Promise<Record<string, string[]> | null> {
 	try {
-		return await rpc(db, 'item.notes', [citeKeys.map((k) => k.key)]);
+		return await rpc<Record<string, string[]>>(db, 'item.notes', [citeKeys.map((k) => k.key)]);
 	} catch (e) {
 		console.error(e);
 		new Notice(`Error retrieving notes: ${(e as Error).message}`, 10000);
@@ -60,13 +62,16 @@ export async function getNotesFromCiteKeys(
 export async function getCollectionFromCiteKey(
 	citeKey: CiteKey,
 	db: DatabaseWithPort,
-): Promise<any[] | null> {
+): Promise<ZoteroCollection[] | null> {
 	try {
-		const result = await rpc(db, 'item.collections', [[citeKey.key], true]);
+		const result = await rpc<Record<string, ZoteroCollection[]>>(db, 'item.collections', [
+			[citeKey.key],
+			true,
+		]);
 		const cols = result[citeKey.key];
 		if (!cols) return [];
-		return cols.map((c: any) => {
-			let pointer = c;
+		return cols.map((c) => {
+			let pointer: ZoteroCollection = c;
 			const fullPath = [c.name];
 			while (pointer.parentCollection) {
 				fullPath.push(pointer.parentCollection.name);
@@ -85,9 +90,9 @@ export async function getCollectionFromCiteKey(
 export async function getAttachmentsFromCiteKey(
 	citeKey: CiteKey,
 	db: DatabaseWithPort,
-): Promise<any[] | null> {
+): Promise<ZoteroAttachment[] | null> {
 	try {
-		return await rpc(db, 'item.attachments', [citeKey.key, citeKey.library]);
+		return await rpc<ZoteroAttachment[]>(db, 'item.attachments', [citeKey.key, citeKey.library]);
 	} catch (e) {
 		console.error(e);
 		return null;
@@ -105,12 +110,12 @@ export async function getBibFromCiteKeys(
 ): Promise<string | null> {
 	if (!citeKeys.length) return null;
 	try {
-		const params: Record<string, any> = { quickCopy: true, contentType: 'html' };
+		const params: Record<string, unknown> = { quickCopy: true, contentType: 'html' };
 		if (cslStyle) {
 			delete params.quickCopy;
 			params.id = cslStyle;
 		}
-		const result = await rpc(db, 'item.bibliography', [
+		const result = await rpc<string>(db, 'item.bibliography', [
 			citeKeys.map((k) => k.key),
 			params,
 			citeKeys[0].library,
@@ -143,14 +148,17 @@ export async function getItemJSONFromCiteKeys(
 	citeKeys: CiteKey[],
 	db: DatabaseWithPort,
 	libraryID: number,
-): Promise<any[] | null> {
+): Promise<ZoteroItem[] | null> {
 	try {
-		const result = await rpc(db, 'item.export', [
+		const result = await rpc<string | unknown[]>(db, 'item.export', [
 			citeKeys.map((k) => k.key),
 			CSL_TRANSLATOR,
 			libraryID,
 		]);
-		return Array.isArray(result) ? JSON.parse(result[2]).items : JSON.parse(result).items;
+		const parsed = (
+			Array.isArray(result) ? JSON.parse(result[2] as string) : JSON.parse(result)
+		) as { items: ZoteroItem[] };
+		return parsed.items;
 	} catch (e) {
 		console.error(e);
 		new Notice(`Error retrieving item data: ${(e as Error).message}`, 10000);
@@ -161,15 +169,21 @@ export async function getItemJSONFromCiteKeys(
 export async function getIssueDateFromCiteKey(
 	citeKey: CiteKey,
 	db: DatabaseWithPort,
-): Promise<moment.Moment | null> {
+): Promise<Moment | null> {
 	try {
-		const result = await rpc(db, 'item.export', [[citeKey.key], DATE_TRANSLATOR, citeKey.library]);
-		const items: any[] = Array.isArray(result) ? JSON.parse(result[2]) : JSON.parse(result);
+		const result = await rpc<string | unknown[]>(db, 'item.export', [
+			[citeKey.key],
+			DATE_TRANSLATOR,
+			citeKey.library,
+		]);
+		const items = (
+			Array.isArray(result) ? JSON.parse(result[2] as string) : JSON.parse(result)
+		) as ZoteroItem[];
 
 		for (const item of items) {
-			const { issued } = item;
-			if (!issued?.['date-parts']?.[0]?.length) continue;
-			const [y, m, d] = issued['date-parts'][0];
+			const parts = item.issued?.['date-parts']?.[0];
+			if (!parts?.length) continue;
+			const [y, m, d] = parts;
 			return moment(`${y}-${m ? padNumber(m) : '01'}-${d ? padNumber(d) : '01'}`, 'YYYY-MM-DD');
 		}
 		return null;
@@ -181,9 +195,11 @@ export async function getIssueDateFromCiteKey(
 
 // ── Cite-key export (all keys in a library) ───────────────────────────────────
 
-export async function getUserGroups(db: DatabaseWithPort): Promise<any[] | null> {
+export async function getUserGroups(
+	db: DatabaseWithPort,
+): Promise<Array<{ id: number | string; name: string }> | null> {
 	try {
-		return await rpc(db, 'user.groups', []);
+		return await rpc<Array<{ id: number | string; name: string }>>(db, 'user.groups', []);
 	} catch (e) {
 		console.error(e);
 		return null;
@@ -204,16 +220,14 @@ export async function getCiteKeyExport(
 			headers: DEFAULT_HEADERS,
 		});
 		ZQueue.end(qid);
-		const entries = JSON.parse(res);
+		const entries: unknown = JSON.parse(res);
 		if (!Array.isArray(entries)) return null;
-		return entries
-			.map((e: any) => {
-				if (!e['citation-key'] || !e['title']) return null;
-				return {
-					libraryID: Number(groupId),
-					citekey: e['citation-key'],
-					title: e['title'],
-				} as CiteKeyExport;
+		return (entries as Array<{ 'citation-key'?: string; title?: string }>)
+			.map((e): CiteKeyExport | null => {
+				const citekey = e['citation-key'];
+				const title = e['title'];
+				if (!citekey || !title) return null;
+				return { libraryID: Number(groupId), citekey, title };
 			})
 			.filter((k): k is CiteKeyExport => k !== null);
 	} catch (e) {
@@ -251,14 +265,14 @@ export async function getItemJSONFromRelations(
 	libraryID: number,
 	relations: string[],
 	db: DatabaseWithPort,
-): Promise<any[]> {
+): Promise<ZoteroItem[]> {
 	const uriMap: Record<string, string> = {};
 	const idOrder: string[] = [];
-	const idMap: Record<string, any> = {};
+	const idMap: Record<string, ZoteroItem> = {};
 	const citekeys: CiteKey[] = [];
 
 	try {
-		const result = await rpc(db, 'item.citationkey', [
+		const result = await rpc<Record<string, string>>(db, 'item.citationkey', [
 			relations.map((r) => {
 				const id = r.split('/').pop()!;
 				idOrder.push(id);
@@ -281,7 +295,7 @@ export async function getItemJSONFromRelations(
 		return [];
 	}
 
-	const items: any[] = citekeys.length
+	const items: ZoteroItem[] = citekeys.length
 		? ((await getItemJSONFromCiteKeys(citekeys, db, libraryID)) ?? [])
 		: [];
 

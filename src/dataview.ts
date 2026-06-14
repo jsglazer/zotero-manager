@@ -52,7 +52,7 @@ export class DataviewIntegration {
 				'dataview:metadata-change',
 				(type: string, file: TFile) => {
 					if (type === 'update' && file instanceof TFile) {
-						this.injectForFile(file);
+						void this.injectForFile(file);
 					}
 				},
 			),
@@ -60,7 +60,7 @@ export class DataviewIntegration {
 
 		// Initial pass over all existing notes
 		for (const file of this.app.vault.getMarkdownFiles()) {
-			this.injectForFile(file);
+			void this.injectForFile(file);
 		}
 	}
 

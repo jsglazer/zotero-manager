@@ -1,5 +1,6 @@
-import { App, Notice, TFile, moment, normalizePath } from 'obsidian';
+import { App, Notice, TFile, normalizePath } from 'obsidian';
 import path from 'path';
+import { moment, type Moment } from '../moment';
 import { CiteKey, ExportToMarkdownParams, ZoteroManagerSettings } from '../types';
 import { getVaultRoot } from '../helpers';
 import { getLocalURI } from '../zotero/annotations';
@@ -33,7 +34,7 @@ import { htmlToMarkdown } from 'obsidian';
 async function processNote(
 	citeKey: CiteKey,
 	note: any,
-	importDate: moment.Moment,
+	importDate: Moment,
 	db: import('../types').DatabaseWithPort,
 	cslStyle?: string,
 ) {
@@ -59,7 +60,7 @@ function processAttachment(attachment: any) {
 
 async function processItem(
 	item: any,
-	importDate: moment.Moment,
+	importDate: Moment,
 	db: import('../types').DatabaseWithPort,
 	cslStyle?: string,
 	skipRelations = false,
@@ -111,7 +112,7 @@ async function processItem(
 async function getRelations(
 	item: any,
 	libraryID: number,
-	importDate: moment.Moment,
+	importDate: Moment,
 	db: import('../types').DatabaseWithPort,
 	cslStyle?: string,
 ): Promise<any[]> {
@@ -168,7 +169,7 @@ export async function exportToMarkdown(
 			item: any;
 			existingFile: TFile | null;
 			existingContent: string;
-			lastImportDate: moment.Moment;
+			lastImportDate: Moment;
 			existingAnnotations: string;
 		}
 	> = new Map();
@@ -240,7 +241,7 @@ export async function exportToMarkdown(
 				return m;
 			}, {});
 
-			const attachmentData = attachmentMap[attachment.path];
+			const attachmentData = attachmentMap[attachment.path ?? ''];
 			if (attachmentData?.annotations) {
 				for (const annot of attachmentData.annotations) {
 					attachmentAnnots.push(
@@ -370,7 +371,7 @@ export async function dataExplorerPrompt(
 		}, {});
 
 		for (const attachment of item.attachments ?? []) {
-			const attachmentData = attachmentMap[attachment.path];
+			const attachmentData = attachmentMap[attachment.path ?? ''];
 			if (attachmentData?.annotations) {
 				attachment.annotations = attachmentData.annotations.map((annot: any) =>
 					convertNativeAnnotation(annot, attachment, '/output_path', 'output_path', 'base_name'),

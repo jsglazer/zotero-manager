@@ -43,7 +43,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 			cls: 'zm-connection-badge zm-connection-checking',
 		});
 		const db = { database: this.plugin.settings.database, port: this.plugin.settings.port };
-		isBBTRunning(db, true).then((running) => {
+		void isBBTRunning(db, true).then((running) => {
 			badge.setText(running ? 'Linked' : 'Not Linked');
 			badge.className = `zm-connection-badge ${running ? 'zm-connection-linked' : 'zm-connection-unlinked'}`;
 		});
@@ -106,7 +106,7 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		};
 
 		// Probe on settings open
-		probeAndUpdateBadge();
+		void probeAndUpdateBadge();
 
 		new Setting(containerEl)
 			.setName('User / group ID')

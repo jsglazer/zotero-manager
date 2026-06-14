@@ -1,6 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
-import { moment, normalizePath } from 'obsidian';
+import { normalizePath } from 'obsidian';
+import { moment } from '../moment';
 import path from 'path';
+import type { FormattedAnnotation, ZoteroAnnotation, ZoteroAttachment, ZoteroTag } from './data';
 
 function hexToHSL(str: string): { h: number; s: number; l: number } {
 	let rStr = '0',
@@ -55,28 +57,28 @@ export function getColorCategory(hex: string): string {
 export function getLocalURI(
 	ext: 'select' | 'open-pdf',
 	uri: string,
-	params?: Record<string, string>,
+	params?: Record<string, string | undefined>,
 ): string {
 	const itemId = uri.split('/').pop();
 	const prefix = `zotero://${ext}`;
 	let url = /group/.test(uri)
 		? uri.replace('http://zotero.org', prefix)
 		: `${prefix}/library/items/${itemId}`;
-	if (params) url += `?${new URLSearchParams(params)}`;
+	if (params) url += `?${new URLSearchParams(params as Record<string, string>)}`;
 	return url;
 }
 
 export function convertNativeAnnotation(
-	annotation: any,
-	attachment: any,
+	annotation: ZoteroAnnotation,
+	attachment: ZoteroAttachment,
 	imageOutputPath: string,
 	imageRelativePath: string,
 	imageBaseName: string,
 	copy = false,
 	colorLabels?: Record<string, string>,
-): Record<string, any> {
+): FormattedAnnotation {
 	const colorCategory = getColorCategory(annotation.annotationColor ?? '#000000');
-	const annot: Record<string, any> = {
+	const annot: FormattedAnnotation = {
 		date: moment(annotation.dateModified),
 		attachment,
 		id: annotation.key,
@@ -89,19 +91,25 @@ export function convertNativeAnnotation(
 
 	if (attachment.path?.endsWith('.pdf')) {
 		annot.pageLabel = annotation.annotationPageLabel;
-		annot.desktopURI = getLocalURI('open-pdf', attachment.uri, {
+		annot.desktopURI = getLocalURI('open-pdf', attachment.uri!, {
 			page: annotation.annotationPageLabel,
 			annotation: annotation.key,
 		});
 	}
 
+	let page: number | undefined;
+	let x: number | undefined;
+	let y: number | undefined;
 	if (annotation.annotationPosition) {
 		if (annotation.annotationPosition.pageIndex !== undefined) {
-			annot.page = annotation.annotationPosition.pageIndex + 1;
+			page = annotation.annotationPosition.pageIndex + 1;
+			annot.page = page;
 		}
 		if (annotation.annotationPosition.rects) {
-			annot.x = annotation.annotationPosition.rects[0][0];
-			annot.y = annotation.annotationPosition.rects[0][1];
+			x = annotation.annotationPosition.rects[0][0];
+			y = annotation.annotationPosition.rects[0][1];
+			annot.x = x;
+			annot.y = y;
 		}
 	}
 
@@ -110,11 +118,12 @@ export function convertNativeAnnotation(
 
 	if (annotation.annotationImagePath) {
 		const parsed = path.parse(annotation.annotationImagePath);
-		annot.imageBaseName = `${imageBaseName}-${annot.page}-x${Math.round(annot.x ?? 0)}-y${Math.round(annot.y ?? 0)}${parsed.ext}`;
-		annot.imageRelativePath = normalizePath(path.join(imageRelativePath, annot.imageBaseName));
+		const builtName = `${imageBaseName}-${page}-x${Math.round(x ?? 0)}-y${Math.round(y ?? 0)}${parsed.ext}`;
+		annot.imageBaseName = builtName;
+		annot.imageRelativePath = normalizePath(path.join(imageRelativePath, builtName));
 		annot.imageExtension = parsed.ext.slice(1);
 
-		const imagePath = path.join(imageOutputPath, annot.imageBaseName);
+		const imagePath = path.join(imageOutputPath, builtName);
 
 		if (copy) {
 			if (!existsSync(imageOutputPath)) mkdirSync(imageOutputPath, { recursive: true });
@@ -132,15 +141,17 @@ export function convertNativeAnnotation(
 
 	if (annotation.tags?.length) {
 		annot.tags = annotation.tags;
-		annot.allTags = annotation.tags.map((t: any) => t.tag).join(', ');
-		annot.hashTags = annotation.tags.map((t: any) => `#${t.tag.replace(/\s+/g, '-')}`).join(', ');
+		annot.allTags = annotation.tags.map((t: ZoteroTag) => t.tag).join(', ');
+		annot.hashTags = annotation.tags
+			.map((t: ZoteroTag) => `#${t.tag.replace(/\s+/g, '-')}`)
+			.join(', ');
 	}
 
 	return annot;
 }
 
-export function concatAnnotations(annots: Array<Record<string, any>>): Array<Record<string, any>> {
-	const output: Array<Record<string, any>> = [];
+export function concatAnnotations(annots: FormattedAnnotation[]): FormattedAnnotation[] {
+	const output: FormattedAnnotation[] = [];
 	const re = /^\+\s*/;
 	for (const a of annots) {
 		if (typeof a.comment === 'string' && re.test(a.comment)) {
@@ -148,7 +159,7 @@ export function concatAnnotations(annots: Array<Record<string, any>>): Array<Rec
 			const last = output[output.length - 1];
 			if (last) {
 				last.annotatedText = last.annotatedText
-					? last.annotatedText + '...' + a.annotatedText
+					? last.annotatedText + '...' + String(a.annotatedText)
 					: a.annotatedText;
 				last.comment = last.comment ? last.comment + '...' + a.comment : a.comment;
 				continue;

@@ -1,5 +1,5 @@
 import nunjucks from 'nunjucks';
-import { moment } from 'obsidian';
+import { moment } from '../moment';
 
 // ── Persist extension ─────────────────────────────────────────────────────────
 // Blocks marked {% persist "key" %}...{% endpersist %} are preserved on re-import.
