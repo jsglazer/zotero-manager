@@ -12,15 +12,25 @@ updates:
       # Pinned to the plugin's minAppVersion; bumping it breaks `npm ci`
       # (peer conflict), so don't auto-PR it.
       - dependency-name: obsidian
-      # Hold ESLint at 9.x: eslint-plugin-obsidianmd@0.3.0 still pins
-      # @eslint/js ^9.30.1 and isn't ESLint-10-ready. Forcing eslint 10 breaks
-      # typed linting (projectService can't load the TS program -> hundreds of
-      # spurious no-unsafe-* errors). Revisit when obsidianmd supports ESLint 10.
+      # --- Coordinated toolchain majors held until a dedicated migration ---
+      # The dev-dependencies group keeps proposing eslint 10 + typescript 6 +
+      # @types/node 25 together, but none work on the current toolchain:
+      #   * eslint 10 / @eslint/js / @eslint/json: eslint-plugin-obsidianmd@0.3.0
+      #     still pins @eslint/js ^9.30.1 and isn't ESLint-10-ready.
+      #   * typescript 6: breaks the build (obsidian's re-exported moment() is no
+      #     longer callable; node builtins fail to resolve) -> needs source fixes.
+      #   * @types/node 25: requires TS 6.
+      # Hold the majors so the group stops failing CI; revisit as one migration
+      # once obsidianmd ships ESLint 10 support.
       - dependency-name: eslint
         update-types: ['version-update:semver-major']
       - dependency-name: '@eslint/js'
         update-types: ['version-update:semver-major']
       - dependency-name: '@eslint/json'
+        update-types: ['version-update:semver-major']
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
