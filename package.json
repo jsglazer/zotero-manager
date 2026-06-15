@@ -22,7 +22,7 @@
 		"@eslint/json": "^2.0.0",
 		"@types/node": "^25.9.3",
 		"@types/nunjucks": "^3.2.6",
-		"@vitest/coverage-v8": "^4.1.8",
+		"@vitest/coverage-v8": "^4.1.9",
 		"builtin-modules": "^5.2.0",
 		"esbuild": "0.28.1",
 		"eslint": "^10.5.0",
