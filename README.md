@@ -1,7 +1,7 @@
 # Zotero Manager for Obsidian
 
 [![GitHub release](https://img.shields.io/github/v/release/jsglazer/zotero-manager?logo=github)](https://github.com/jsglazer/zotero-manager/releases)
-[![GitHub license](https://img.shields.io/github/license/jsglazer/zotero-manager)](https://github.com/jsglazer/zotero-manager/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/jsglazer/zotero-manager/blob/main/LICENSE)
 [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97756?logo=anthropic)](https://claude.ai)
 [![CI](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml)
