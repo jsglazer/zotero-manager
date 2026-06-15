@@ -12,16 +12,11 @@ updates:
       # Pinned to the plugin's minAppVersion; bumping it breaks `npm ci`
       # (peer conflict), so don't auto-PR it.
       - dependency-name: obsidian
-      # Hold the ESLint 10 trio: eslint-plugin-obsidianmd@0.3.0 still pins
-      # @eslint/js ^9.30.1 and isn't ESLint-10-ready (forcing eslint 10 breaks
-      # typed linting). TypeScript 6 and @types/node 25 have been adopted, so
-      # they are no longer held. Revisit ESLint 10 once obsidianmd supports it.
-      - dependency-name: eslint
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@eslint/js'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@eslint/json'
-        update-types: ['version-update:semver-major']
+      # ESLint 10 trio (eslint / @eslint/js / @eslint/json) adopted 2026-06-15.
+      # eslint-plugin-obsidianmd@0.3.0 runs clean under eslint 10 at runtime;
+      # the only friction was peer caps in three bundled plugins
+      # (@microsoft/eslint-plugin-sdl, eslint-plugin-import, eslint-plugin-react),
+      # resolved via the package.json `overrides` block. No longer held.
 
   - package-ecosystem: github-actions
     directory: '/'
