@@ -1,12 +1,6 @@
 # Zotero Manager for Obsidian
 
-[![GitHub release](https://img.shields.io/github/v/release/jsglazer/zotero-manager?logo=github)](https://github.com/jsglazer/zotero-manager/releases)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/jsglazer/zotero-manager/blob/main/LICENSE)
-[![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97756?logo=anthropic)](https://claude.ai)
-[![Gemini Flash Antigravity](https://img.shields.io/badge/Gemini%20Flash-Antigravity-4f86f7?logo=google-gemini&logoColor=white)](https://github.com/google-gemini)
-[![CI](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jsglazer/zotero-manager/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jsglazer/zotero-manager)
+[![GitHub release](https://img.shields.io/github/v/release/jsglazer/zotero-manager?logo=github)](https://github.com/jsglazer/zotero-manager/releases) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/jsglazer/zotero-manager/blob/main/LICENSE) [![Made with Claude](https://img.shields.io/badge/Made_with-Claude-D97756?logo=anthropic)](https://claude.ai) [![Gemini Flash Antigravity](https://img.shields.io/badge/Gemini%20Flash-Antigravity-4f86f7?logo=google-gemini&logoColor=white)](https://github.com/google-gemini) [![CI](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/ci.yml) [![CodeQL](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/jsglazer/zotero-manager/actions/workflows/codeql.yml) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jsglazer/zotero-manager/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jsglazer/zotero-manager)
 
 An Obsidian plugin for querying and importing bibliographic information, PDF annotations, notes, and citations from [Zotero](https://www.zotero.org/). Built as a modernized replacement for [obsidian-zotero-integration](https://github.com/mgmeyers/obsidian-zotero-integration), with full feature parity, native Zotero 6 annotation support, and a Zotero Web API fallback mode.
 
@@ -164,6 +158,13 @@ Zotero Manager integrates with the [Dataview](https://github.com/blacksmithgu/ob
 | Formatted citation | (Smith, 2020) | ❌ (no parseable key) |
 | Template output | depends on template | ✅ if `@key` or `\cite{}` pattern used |
 
+`@`-prefixed tokens inside fenced ` ``` ` code blocks and inline `` `code` `` spans (decorators, npm scopes, email addresses, etc.) are ignored, so they never pollute the `citekeys` field.
+
+### Datacore and Bases compatibility
+
+- **[Datacore](https://github.com/blacksmithgu/datacore)**: not currently supported. Datacore builds its own index independently of Dataview and does not expose a public API for another plugin to inject a computed field (the equivalent of Dataview's `page.fields.set()`) into that index.
+- **[Bases](https://obsidian.md/help/bases)**: not currently supported. Bases properties come only from note frontmatter, `file` metadata, or in-file `formula` expressions (`BasesPropertyType = 'note' | 'formula' | 'file'`) — there is no plugin-registrable property source, so a `citekeys` field can't be injected the way it is for Dataview without writing it into frontmatter.
+
 ### Querying with Dataview
 
 **Find all notes that cite a specific paper:**
@@ -302,6 +303,21 @@ The heading uses the **color label** configured in Settings (e.g. `Key` for a ye
 
 - Highlights and underlines with both annotated text and a comment render each as a bullet
 - Notes and images show the comment text
+
+---
+
+## Public API
+
+Other Obsidian plugins can call Zotero Manager's citation/bibliography functions directly instead of running a second BBT integration against the same library:
+
+```ts
+const zm = app.plugins.plugins['zotero-manager']?.api;
+if (zm && zm.version >= 1 && (await zm.isAvailable())) {
+	const html = await zm.getBibliography([{ key: 'smith2020', library: 1 }]);
+}
+```
+
+The surface is read-only (no settings access, no writes) and versioned — check `zm.version` before calling anything else. See `src/api.ts` for the full `ZoteroManagerAPI` interface (`isAvailable`, `getBibliography`, `getCitation`, `getItemJSON`, `getAllCiteKeys`).
 
 ---
 

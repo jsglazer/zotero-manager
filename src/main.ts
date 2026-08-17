@@ -1,13 +1,15 @@
 import { EditableFileView, Notice, Plugin, TFile } from 'obsidian';
-import { DEFAULT_SETTINGS, ZoteroManagerSettings } from './types';
-import { detectMode, warnNoConnection } from './zotero/connection';
-import { getCAYW, getCiteKeys } from './zotero/cayw';
+import { DatabaseWithPort, DEFAULT_SETTINGS, ZoteroManagerSettings } from './types';
+import { detectMode, isBBTRunning, warnNoConnection } from './zotero/connection';
+import { getAllCiteKeysForSuggest, getCAYW, getCiteKeys } from './zotero/cayw';
+import { getBibFromCiteKeys, getItemJSONFromCiteKeys } from './zotero/jsonRPC';
 import { renderCiteTemplate, exportToMarkdown } from './export/export';
 import { noteExportPrompt, insertNotesIntoCurrentDoc, filesFromNotes } from './export/exportNotes';
 import { ZoteroManagerSettingsTab } from './settings/settings';
 import { CiteSuggest } from './ui/CiteSuggest';
 import { DataExplorerView, DATA_EXPLORER_VIEW } from './ui/DataExplorerView';
 import { DataviewIntegration } from './dataview';
+import type { ZoteroManagerAPI } from './api';
 
 const CMD_PREFIX = 'zotero-manager:';
 const CITE_CMD_PREFIX = 'zm-cite-';
@@ -16,12 +18,27 @@ const EXPORT_CMD_PREFIX = 'zm-export-';
 export default class ZoteroManager extends Plugin {
 	settings!: ZoteroManagerSettings;
 	dataview!: DataviewIntegration;
+	api!: ZoteroManagerAPI;
 	private citeSuggest!: CiteSuggest;
 	private registeredCiteCommandIds = new Set<string>();
 	private registeredExportCommandIds = new Set<string>();
 
+	private db(): DatabaseWithPort {
+		return { database: this.settings.database, port: this.settings.port };
+	}
+
 	async onload() {
 		await this.loadSettings();
+
+		this.api = {
+			version: 1,
+			isAvailable: () => isBBTRunning(this.db(), true),
+			getBibliography: (keys, opts) =>
+				getBibFromCiteKeys(keys, this.db(), opts?.cslStyle, opts?.format ?? 'html'),
+			getCitation: (format) => getCAYW(format, this.db()),
+			getItemJSON: (keys, libraryID) => getItemJSONFromCiteKeys(keys, this.db(), libraryID),
+			getAllCiteKeys: (force) => getAllCiteKeysForSuggest(this.db(), force),
+		};
 
 		this.addSettingTab(new ZoteroManagerSettingsTab(this.app, this));
 
@@ -48,7 +65,7 @@ export default class ZoteroManager extends Plugin {
 			id: 'zm-insert-notes',
 			name: 'Insert notes into current document',
 			editorCallback: async (editor) => {
-				const db = { database: this.settings.database, port: this.settings.port };
+				const db = this.db();
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') {
 					warnNoConnection();
@@ -67,7 +84,7 @@ export default class ZoteroManager extends Plugin {
 			id: 'zm-import-notes',
 			name: 'Import notes',
 			callback: async () => {
-				const db = { database: this.settings.database, port: this.settings.port };
+				const db = this.db();
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') {
 					warnNoConnection();
@@ -114,7 +131,7 @@ export default class ZoteroManager extends Plugin {
 			id,
 			name: `Insert citation: ${format.name}`,
 			editorCallback: async (editor) => {
-				const db = { database: this.settings.database, port: this.settings.port };
+				const db = this.db();
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') {
 					warnNoConnection();
@@ -145,7 +162,7 @@ export default class ZoteroManager extends Plugin {
 			id,
 			name: `Export to Markdown: ${format.name}`,
 			callback: async () => {
-				const db = { database: this.settings.database, port: this.settings.port };
+				const db = this.db();
 				const mode = await detectMode(db, this.settings.webApiKey);
 				if (mode === 'none') {
 					warnNoConnection();

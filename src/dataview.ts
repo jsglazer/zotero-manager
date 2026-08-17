@@ -10,15 +10,26 @@ const PANDOC_RE = /@([\w][\w:./-]*)/g;
 const LATEX_RE =
 	/\\(?:cite|autocite|parencite|textcite|footcite|nocite|citep|citet|Cite|Autocite)\*?\{([^}]+)\}/g;
 
+// Fenced ``` / ~~~ code blocks and inline `code` spans routinely contain
+// `@`-prefixed tokens (decorators, npm scopes, emails) that match the
+// citation patterns below but are not citations — strip them before scanning.
+const FENCED_CODE_RE = /^(```|~~~).*?^\1/gms;
+const INLINE_CODE_RE = /`[^`\n]+`/g;
+
+function stripCodeBlocks(content: string): string {
+	return content.replace(FENCED_CODE_RE, '').replace(INLINE_CODE_RE, '');
+}
+
 export function extractCiteKeys(content: string): string[] {
 	const keys = new Set<string>();
+	const text = stripCodeBlocks(content);
 
-	for (const m of content.matchAll(PANDOC_RE)) {
+	for (const m of text.matchAll(PANDOC_RE)) {
 		const k = m[1].trim();
 		if (k && !k.includes(' ')) keys.add(k);
 	}
 
-	for (const m of content.matchAll(LATEX_RE)) {
+	for (const m of text.matchAll(LATEX_RE)) {
 		for (const k of m[1].split(',')) {
 			const trimmed = k.trim();
 			if (trimmed) keys.add(trimmed);
