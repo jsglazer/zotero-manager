@@ -38,7 +38,7 @@
 	"dependencies": {
 		"fuse.js": "^7.4.2",
 		"nunjucks": "^3.2.4",
-		"preact": "^10.22.0"
+		"preact": "^10.29.8"
 	},
 	"overrides": {
 		"@microsoft/eslint-plugin-sdl": {
