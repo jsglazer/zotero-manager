@@ -275,7 +275,9 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 					Object.assign(this.plugin.settings.colorLabels, synced);
 					await this.plugin.saveSettings();
 					new Notice(`Synced ${Object.keys(synced).length} color label(s) from Better Notes.`);
+					const scrollTop = containerEl.scrollTop;
 					this.display();
+					containerEl.scrollTop = scrollTop;
 				}),
 			);
 
