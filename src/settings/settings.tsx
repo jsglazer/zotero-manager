@@ -1,7 +1,8 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import type ZoteroManager from '../main';
 import { CitationFormat, DEFAULT_COLOR_LABELS, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
+import { getColorLabelsFromBetterNotes } from '../zotero/betterNotes';
 import { validateWebApiKey } from '../zotero/webAPI';
 import { FolderSuggest } from '../ui/FolderSuggest';
 import { FileSuggest } from '../ui/FileSuggest';
@@ -254,6 +255,29 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 			text: 'Rename Zotero annotation colors on import. The left column shows the fixed Zotero color name; the right column is the label used in your notes.',
 			cls: 'setting-item-description',
 		});
+
+		new Setting(containerEl)
+			.setName('Sync from Better Notes')
+			.setDesc(
+				'Fetch color labels from the Better Notes Zotero plugin, if installed and running, and use them below.',
+			)
+			.addButton((btn) =>
+				btn.setButtonText('Sync now').onClick(async () => {
+					const db = { database: this.plugin.settings.database, port: this.plugin.settings.port };
+					const synced = await getColorLabelsFromBetterNotes(db);
+					if (!synced || !Object.keys(synced).length) {
+						new Notice(
+							'Could not reach Better Notes. Ensure Zotero is running with Better Notes installed and enabled.',
+							7000,
+						);
+						return;
+					}
+					Object.assign(this.plugin.settings.colorLabels, synced);
+					await this.plugin.saveSettings();
+					new Notice(`Synced ${Object.keys(synced).length} color label(s) from Better Notes.`);
+					this.display();
+				}),
+			);
 
 		const colorLabels = this.plugin.settings.colorLabels ?? {};
 		for (const zoteroColor of Object.keys(DEFAULT_COLOR_LABELS)) {
