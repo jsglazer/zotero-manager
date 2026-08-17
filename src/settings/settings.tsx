@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
 import type ZoteroManager from '../main';
 import { CitationFormat, DEFAULT_COLOR_LABELS, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
@@ -9,6 +9,7 @@ import { FileSuggest } from '../ui/FileSuggest';
 
 export class ZoteroManagerSettingsTab extends PluginSettingTab {
 	plugin: ZoteroManager;
+	private colorLabelInputs: Record<string, TextComponent> = {};
 
 	constructor(app: App, plugin: ZoteroManager) {
 		super(app, plugin);
@@ -275,25 +276,30 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 					Object.assign(this.plugin.settings.colorLabels, synced);
 					await this.plugin.saveSettings();
 					new Notice(`Synced ${Object.keys(synced).length} color label(s) from Better Notes.`);
-					const scrollTop = containerEl.scrollTop;
-					this.display();
-					containerEl.scrollTop = scrollTop;
+					// Update the existing text fields in place instead of calling
+					// this.display() — a full re-render resets scroll position in
+					// Obsidian's settings modal, burying this list below the fold.
+					for (const [zoteroColor, value] of Object.entries(synced)) {
+						this.colorLabelInputs[zoteroColor]?.setValue(value);
+					}
 				}),
 			);
 
+		this.colorLabelInputs = {};
 		const colorLabels = this.plugin.settings.colorLabels ?? {};
 		for (const zoteroColor of Object.keys(DEFAULT_COLOR_LABELS)) {
 			new Setting(containerEl)
 				.setName(zoteroColor)
-				.addText((t) =>
-					t
+				.addText((t) => {
+					this.colorLabelInputs[zoteroColor] = t;
+					return t
 						.setPlaceholder(DEFAULT_COLOR_LABELS[zoteroColor])
 						.setValue(colorLabels[zoteroColor] ?? DEFAULT_COLOR_LABELS[zoteroColor])
 						.onChange(async (v) => {
 							this.plugin.settings.colorLabels[zoteroColor] = v || DEFAULT_COLOR_LABELS[zoteroColor];
 							await this.plugin.saveSettings();
-						})
-				);
+						});
+				});
 		}
 	}
 
