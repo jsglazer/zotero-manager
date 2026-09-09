@@ -1,7 +1,7 @@
 import { EditableFileView, Notice, Plugin, TFile } from 'obsidian';
 import { DatabaseWithPort, DEFAULT_SETTINGS, ZoteroManagerSettings } from './types';
 import { detectMode, isBBTRunning, warnNoConnection } from './zotero/connection';
-import { getAllCiteKeysForSuggest, getCAYW, getCiteKeys } from './zotero/cayw';
+import { getAllCiteKeysForSuggest, getCAYW, getCAYWJSON, getCiteKeys } from './zotero/cayw';
 import { getBibFromCiteKeys, getItemJSONFromCiteKeys } from './zotero/jsonRPC';
 import { getLocalURI } from './zotero/annotations';
 import { renderCiteTemplate, exportToMarkdown } from './export/export';
@@ -9,7 +9,7 @@ import { noteExportPrompt, insertNotesIntoCurrentDoc, filesFromNotes } from './e
 import { ZoteroManagerSettingsTab } from './settings/settings';
 import { CiteSuggest } from './ui/CiteSuggest';
 import { DataExplorerView, DATA_EXPLORER_VIEW } from './ui/DataExplorerView';
-import { DataviewIntegration, citeKeyMatchAtPosition, extractCiteKeys } from './dataview';
+import { DataviewIntegration } from './dataview';
 import type { ZoteroManagerAPI } from './api';
 
 const CMD_PREFIX = 'zotero-manager:';
@@ -129,50 +129,20 @@ export default class ZoteroManager extends Plugin {
 					return;
 				}
 
-				const selection = editor.getSelection();
-				let citekey: string | null;
-				let insertPos: { line: number; ch: number };
-				if (selection.trim()) {
-					citekey = extractCiteKeys(selection)[0] ?? null;
-					insertPos = editor.getCursor('to');
-				} else {
-					const cursor = editor.getCursor();
-					const match = citeKeyMatchAtPosition(editor.getLine(cursor.line), cursor.ch);
-					citekey = match?.key ?? null;
-					insertPos = match ? { line: cursor.line, ch: match.end } : cursor;
-				}
+				const items = await getCAYWJSON(db);
+				if (!items?.length) return;
 
-				if (!citekey) {
-					new Notice('Place the cursor on a citation to create a Zotero link');
+				const links = items
+					.map((item) => item.select ?? (item.uri ? getLocalURI('select', item.uri) : null))
+					.filter((link): link is string => !!link);
+
+				if (!links.length) {
+					new Notice('Could not build a Zotero link for the selected item');
 					return;
 				}
 
-				let allKeys = await getAllCiteKeysForSuggest(db);
-				let entry = allKeys.find((k) => k.citekey === citekey);
-				if (!entry) {
-					allKeys = await getAllCiteKeysForSuggest(db, true);
-					entry = allKeys.find((k) => k.citekey === citekey);
-				}
-				if (!entry) {
-					new Notice(`Citekey "${citekey}" not found in Zotero library`);
-					return;
-				}
-
-				const items = await getItemJSONFromCiteKeys(
-					[{ key: citekey, library: entry.libraryID }],
-					db,
-					entry.libraryID,
-				);
-				const item = items?.[0];
-				if (!item?.uri && !item?.select) {
-					new Notice(`Could not retrieve Zotero link for "${citekey}"`);
-					return;
-				}
-
-				const link = item.select ?? getLocalURI('select', item.uri!);
-				const insertion = ` [Open in Zotero](${link})`;
-				editor.replaceRange(insertion, insertPos);
-				editor.setCursor({ line: insertPos.line, ch: insertPos.ch + insertion.length });
+				const insertion = links.map((link) => `[Open in Zotero](${link})`).join(' ');
+				editor.replaceSelection(insertion);
 			},
 		});
 	}

@@ -20,32 +20,6 @@ function stripCodeBlocks(content: string): string {
 	return content.replace(FENCED_CODE_RE, '').replace(INLINE_CODE_RE, '');
 }
 
-// Finds the citation (@key or \cite{key}) whose span contains the given
-// character offset on a single line. Used to resolve "the citation under the
-// cursor" for cursor-driven commands.
-export interface CiteKeyMatch {
-	key: string;
-	start: number;
-	end: number;
-}
-
-export function citeKeyMatchAtPosition(line: string, ch: number): CiteKeyMatch | null {
-	for (const m of line.matchAll(PANDOC_RE)) {
-		const start = m.index ?? 0;
-		const end = start + m[0].length;
-		if (ch >= start && ch <= end) return { key: m[1].trim(), start, end };
-	}
-	for (const m of line.matchAll(LATEX_RE)) {
-		const start = m.index ?? 0;
-		const end = start + m[0].length;
-		if (ch >= start && ch <= end) {
-			const key = m[1].split(',')[0]?.trim();
-			if (key) return { key, start, end };
-		}
-	}
-	return null;
-}
-
 export function extractCiteKeys(content: string): string[] {
 	const keys = new Set<string>();
 	const text = stripCodeBlocks(content);
