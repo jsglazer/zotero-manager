@@ -1,8 +1,18 @@
 import { EditableFileView, Notice, Plugin, TFile } from 'obsidian';
 import { DatabaseWithPort, DEFAULT_SETTINGS, ZoteroManagerSettings } from './types';
 import { detectMode, isBBTRunning, warnNoConnection } from './zotero/connection';
-import { getAllCiteKeysForSuggest, getCAYW, getCAYWJSON, getCiteKeys } from './zotero/cayw';
-import { getBibFromCiteKeys, getItemJSONFromCiteKeys } from './zotero/jsonRPC';
+import {
+	getAllCiteKeysForSuggest,
+	getCAYW,
+	getCAYWJSON,
+	getCiteKeyFromAny,
+	getCiteKeys,
+} from './zotero/cayw';
+import {
+	getAttachmentsFromCiteKey,
+	getBibFromCiteKeys,
+	getItemJSONFromCiteKeys,
+} from './zotero/jsonRPC';
 import { getLocalURI } from './zotero/annotations';
 import { renderCiteTemplate, exportToMarkdown } from './export/export';
 import { noteExportPrompt, insertNotesIntoCurrentDoc, filesFromNotes } from './export/exportNotes';
@@ -132,9 +142,22 @@ export default class ZoteroManager extends Plugin {
 				const items = await getCAYWJSON(db);
 				if (!items?.length) return;
 
-				const links = items
-					.map((item) => item.select ?? (item.uri ? getLocalURI('select', item.uri) : null))
-					.filter((link): link is string => !!link);
+				const links: string[] = [];
+				for (const item of items) {
+					// Prefer opening the item's PDF directly in the reader; fall back to
+					// just selecting the item in the library if it has no PDF attachment.
+					let link: string | null = null;
+					const citeKey = getCiteKeyFromAny(item);
+					if (citeKey) {
+						const attachments = await getAttachmentsFromCiteKey(citeKey, db);
+						const pdf = attachments?.find((a) => a.path?.endsWith('.pdf'));
+						if (pdf?.uri) link = getLocalURI('open-pdf', pdf.uri);
+					}
+					if (!link) {
+						link = item.select ?? (item.uri ? getLocalURI('select', item.uri) : null);
+					}
+					if (link) links.push(link);
+				}
 
 				if (!links.length) {
 					new Notice('Could not build a Zotero link for the selected item');
