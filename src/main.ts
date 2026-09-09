@@ -151,7 +151,7 @@ export default class ZoteroManager extends Plugin {
 					if (citeKey) {
 						const attachments = await getAttachmentsFromCiteKey(citeKey, db);
 						const pdf = attachments?.find((a) => a.path?.endsWith('.pdf'));
-						if (pdf?.uri) link = getLocalURI('open-pdf', pdf.uri);
+						link = pdf?.open ?? (pdf?.uri ? getLocalURI('open-pdf', pdf.uri) : null);
 					}
 					if (!link) {
 						link = item.select ?? (item.uri ? getLocalURI('select', item.uri) : null);

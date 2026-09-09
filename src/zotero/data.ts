@@ -52,6 +52,7 @@ export interface ZoteroAttachment {
 	uri?: string;
 	path?: string;
 	select?: string;
+	open?: string;
 	itemKey?: string;
 	desktopURI?: string;
 	pdfURI?: string;
