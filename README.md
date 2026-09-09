@@ -127,7 +127,7 @@ Under **Settings → Zotero Manager → Annotations → Color labels**, you can 
 
 Leaving a field blank reverts it to its default.
 
-**Syncing from Better Notes:** if you maintain your color labels in the [Better Notes](https://github.com/jsglazer/better-notes) Zotero plugin instead, click **Sync from Better Notes** above the list to pull them in over HTTP (same local Zotero server BBT uses). Requires a Better Notes build that exposes `/better-notes/color-labels`; sync is one-way and manual — it won't overwrite this list automatically or watch for changes.
+**Syncing from Enhanced Notes:** if you maintain your color labels in the [Enhanced Notes](https://github.com/jsglazer/enhanced-notes) Zotero plugin instead, click **Sync from Enhanced Notes** above the list to pull them in over HTTP (same local Zotero server BBT uses). Requires an Enhanced Notes build that exposes `/enhanced-notes/color-labels`; sync is one-way and manual — it won't overwrite this list automatically or watch for changes.
 
 ---
 

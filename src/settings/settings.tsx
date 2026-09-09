@@ -2,7 +2,7 @@ import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian'
 import type ZoteroManager from '../main';
 import { CitationFormat, DEFAULT_COLOR_LABELS, ExportFormat } from '../types';
 import { isBBTRunning } from '../zotero/connection';
-import { getColorLabelsFromBetterNotes } from '../zotero/betterNotes';
+import { getColorLabelsFromEnhancedNotes } from '../zotero/enhancedNotes';
 import { validateWebApiKey } from '../zotero/webAPI';
 import { FolderSuggest } from '../ui/FolderSuggest';
 import { FileSuggest } from '../ui/FileSuggest';
@@ -258,24 +258,24 @@ export class ZoteroManagerSettingsTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
-			.setName('Sync from Better Notes')
+			.setName('Sync from Enhanced Notes')
 			.setDesc(
-				'Fetch color labels from the Better Notes Zotero plugin, if installed and running, and use them below.',
+				'Fetch color labels from the Enhanced Notes Zotero plugin, if installed and running, and use them below.',
 			)
 			.addButton((btn) =>
 				btn.setButtonText('Sync now').onClick(async () => {
 					const db = { database: this.plugin.settings.database, port: this.plugin.settings.port };
-					const synced = await getColorLabelsFromBetterNotes(db);
+					const synced = await getColorLabelsFromEnhancedNotes(db);
 					if (!synced || !Object.keys(synced).length) {
 						new Notice(
-							'Could not reach Better Notes. Ensure Zotero is running with Better Notes installed and enabled.',
+							'Could not reach Enhanced Notes. Ensure Zotero is running with Enhanced Notes installed and enabled.',
 							7000,
 						);
 						return;
 					}
 					Object.assign(this.plugin.settings.colorLabels, synced);
 					await this.plugin.saveSettings();
-					new Notice(`Synced ${Object.keys(synced).length} color label(s) from Better Notes.`);
+					new Notice(`Synced ${Object.keys(synced).length} color label(s) from Enhanced Notes.`);
 					// Update the existing text fields in place instead of calling
 					// this.display() — a full re-render resets scroll position in
 					// Obsidian's settings modal, burying this list below the fold.
