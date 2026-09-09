@@ -12,6 +12,7 @@ An Obsidian plugin for querying and importing bibliographic information, PDF ann
 - **Import annotations** — pull PDF highlights, underlines, notes, and image annotations from Zotero directly into Obsidian
 - **Import notes** — import Zotero text notes (including embedded annotation links) as Obsidian files
 - **Cite key autocomplete** — type `@` in any note to trigger fuzzy-search autocomplete over your entire Zotero library
+- **Create Zotero link** — turn the citation under your cursor into a clickable **Open in Zotero** link
 - **Data explorer** — sidebar view to inspect the full data object available to your templates
 - **Connection status** — live Linked / Not Linked indicator in settings
 - **Web API fallback** — works without Better BibTeX by falling back to the Zotero Web API
@@ -140,6 +141,7 @@ Leaving a field blank reverts it to its default.
 | **Insert notes into current document** | Inserts Zotero notes + annotations inline at cursor |
 | **Open data explorer** | Opens sidebar with the full template data object for a selected item |
 | **Refresh cite key cache** | Forces a refresh of the cite key list used for autocomplete |
+| **Create Zotero link** | Inserts an **Open in Zotero** link after the citation under the cursor (or selection), opening that item directly in Zotero |
 
 ---
 
