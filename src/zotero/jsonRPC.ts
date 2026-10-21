@@ -139,10 +139,14 @@ export function getBibFromCiteKey(
 	return getBibFromCiteKeys([citeKey], db, cslStyle, format, silent);
 }
 
-// ── Item JSON (CSL) ───────────────────────────────────────────────────────────
+// ── Item JSON ─────────────────────────────────────────────────────────────────
 
-const CSL_TRANSLATOR = '36a3b0b5-bad0-4a04-b79b-441c7cef77db';
-const DATE_TRANSLATOR = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
+// BetterBibTeX JSON: Zotero-native items (itemType, creators, date, notes,
+// attachments) — what the note templates read. Not CSL-JSON: pandoc --citeproc
+// cannot read it; use getCSLJSONFromCiteKeys for that.
+const BBT_JSON_TRANSLATOR = '36a3b0b5-bad0-4a04-b79b-441c7cef77db';
+const CSL_JSON_TRANSLATOR = 'f4b52ab0-f878-4556-85a0-c7aeedd09dfc';
+const BIBLATEX_TRANSLATOR = 'f895aa0d-f28e-47fe-b247-2ea77c6ed583';
 
 export async function getItemJSONFromCiteKeys(
 	citeKeys: CiteKey[],
@@ -152,7 +156,7 @@ export async function getItemJSONFromCiteKeys(
 	try {
 		const result = await rpc<string | unknown[]>(db, 'item.export', [
 			citeKeys.map((k) => k.key),
-			CSL_TRANSLATOR,
+			BBT_JSON_TRANSLATOR,
 			libraryID,
 		]);
 		const parsed = (
@@ -166,6 +170,51 @@ export async function getItemJSONFromCiteKeys(
 	}
 }
 
+// Raw text of an item.export with `translator`, or null on failure. Silent:
+// these back the public API, whose callers report errors their own way.
+async function exportCiteKeys(
+	citeKeys: CiteKey[],
+	db: DatabaseWithPort,
+	libraryID: number,
+	translator: string,
+): Promise<string | null> {
+	try {
+		const result = await rpc<string | unknown[]>(db, 'item.export', [
+			citeKeys.map((k) => k.key),
+			translator,
+			libraryID,
+		]);
+		return Array.isArray(result) ? (result[2] as string) : result;
+	} catch (e) {
+		console.error(e);
+		return null;
+	}
+}
+
+export async function getCSLJSONFromCiteKeys(
+	citeKeys: CiteKey[],
+	db: DatabaseWithPort,
+	libraryID: number,
+): Promise<unknown[] | null> {
+	const text = await exportCiteKeys(citeKeys, db, libraryID, CSL_JSON_TRANSLATOR);
+	if (text === null) return null;
+	try {
+		const items: unknown = JSON.parse(text);
+		return Array.isArray(items) ? items : null;
+	} catch (e) {
+		console.error(e);
+		return null;
+	}
+}
+
+export function getBibLaTeXFromCiteKeys(
+	citeKeys: CiteKey[],
+	db: DatabaseWithPort,
+	libraryID: number,
+): Promise<string | null> {
+	return exportCiteKeys(citeKeys, db, libraryID, BIBLATEX_TRANSLATOR);
+}
+
 export async function getIssueDateFromCiteKey(
 	citeKey: CiteKey,
 	db: DatabaseWithPort,
@@ -173,7 +222,7 @@ export async function getIssueDateFromCiteKey(
 	try {
 		const result = await rpc<string | unknown[]>(db, 'item.export', [
 			[citeKey.key],
-			DATE_TRANSLATOR,
+			CSL_JSON_TRANSLATOR,
 			citeKey.library,
 		]);
 		const items = (
@@ -216,7 +265,7 @@ export async function getCiteKeyExport(
 		await ZQueue.wait(qid);
 		const res = await request({
 			method: 'GET',
-			url: `${getBBTBase(db)}/export/library?/${groupId}/${groupName}.${DATE_TRANSLATOR}`,
+			url: `${getBBTBase(db)}/export/library?/${groupId}/${groupName}.${CSL_JSON_TRANSLATOR}`,
 			headers: DEFAULT_HEADERS,
 		});
 		ZQueue.end(qid);

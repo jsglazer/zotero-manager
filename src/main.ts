@@ -11,6 +11,8 @@ import {
 import {
 	getAttachmentsFromCiteKey,
 	getBibFromCiteKeys,
+	getBibLaTeXFromCiteKeys,
+	getCSLJSONFromCiteKeys,
 	getItemJSONFromCiteKeys,
 } from './zotero/jsonRPC';
 import { getLocalURI } from './zotero/annotations';
@@ -48,6 +50,8 @@ export default class ZoteroManager extends Plugin {
 				getBibFromCiteKeys(keys, this.db(), opts?.cslStyle, opts?.format ?? 'html'),
 			getCitation: (format) => getCAYW(format, this.db()),
 			getItemJSON: (keys, libraryID) => getItemJSONFromCiteKeys(keys, this.db(), libraryID),
+			getCSLJSON: (keys, libraryID) => getCSLJSONFromCiteKeys(keys, this.db(), libraryID),
+			getBibLaTeX: (keys, libraryID) => getBibLaTeXFromCiteKeys(keys, this.db(), libraryID),
 			getAllCiteKeys: (force) => getAllCiteKeysForSuggest(this.db(), force),
 		};
 
