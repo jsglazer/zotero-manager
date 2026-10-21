@@ -321,7 +321,9 @@ if (zm && zm.version >= 1 && (await zm.isAvailable())) {
 }
 ```
 
-The surface is read-only (no settings access, no writes) and versioned — check `zm.version` before calling anything else. See `src/api.ts` for the full `ZoteroManagerAPI` interface (`isAvailable`, `getBibliography`, `getCitation`, `getItemJSON`, `getAllCiteKeys`).
+The surface is read-only (no settings access, no writes) and versioned — check `zm.version` before calling anything else. See `src/api.ts` for the full `ZoteroManagerAPI` interface (`isAvailable`, `getBibliography`, `getCitation`, `getItemJSON`, `getCSLJSON`, `getBibLaTeX`, `getAllCiteKeys`).
+
+For pandoc or LaTeX, pick the export by its format. `getCSLJSON(keys, libraryID)` returns CSL-JSON items (Better CSL JSON) for `pandoc --citeproc`. `getBibLaTeX(keys, libraryID)` returns a BibLaTeX `.bib` (Better BibLaTeX) for biblatex/biber. `getItemJSON` returns BetterBibTeX JSON — Zotero-native fields, notes and attachments, which is what the note templates use — and is **not** CSL-JSON, so citeproc can't read it. `getCSLJSON` and `getBibLaTeX` need 1.1.15 or later.
 
 ---
 
