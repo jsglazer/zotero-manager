@@ -1,12 +1,7 @@
 // ── Citation formats ──────────────────────────────────────────────────────────
 
 export type CitationFormatType =
-	| 'latex'
-	| 'biblatex'
-	| 'pandoc'
-	| 'formatted-citation'
-	| 'formatted-bibliography'
-	| 'template';
+	'latex' | 'biblatex' | 'pandoc' | 'formatted-citation' | 'formatted-bibliography' | 'template';
 
 export interface CitationFormat {
 	name: string;
@@ -42,9 +37,7 @@ export type ConnectionMode = 'bbt' | 'webapi' | 'none';
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 export type NotesToOpenAfterImport =
-	| 'first-imported-note'
-	| 'last-imported-note'
-	| 'all-imported-notes';
+	'first-imported-note' | 'last-imported-note' | 'all-imported-notes';
 
 export interface ZoteroManagerSettings {
 	// Connection

@@ -196,12 +196,10 @@ export default class ZoteroManager extends Plugin {
 
 				// Re-read format from current settings so name/template changes are picked up
 				const current = this.settings.citeFormats.find((f) => f.name === format.name) ?? format;
-				let result: string | null = null;
-				if (current.format === 'template' && current.template?.trim()) {
-					result = await renderCiteTemplate(this.app, { database: db, format: current });
-				} else {
-					result = await getCAYW(current, db);
-				}
+				const result: string | null =
+					current.format === 'template' && current.template?.trim()
+						? await renderCiteTemplate(this.app, { database: db, format: current })
+						: await getCAYW(current, db);
 				if (typeof result === 'string') {
 					editor.replaceSelection(result);
 					await this.dataview.injectForActiveFile();
